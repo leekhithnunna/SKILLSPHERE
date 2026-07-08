@@ -5,6 +5,9 @@ const path = require('path');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const gigRoutes = require('./routes/gigRoutes');
+const proposalRoutes = require('./routes/proposalRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -28,6 +31,9 @@ app.use(cookieParser());
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/gigs', gigRoutes);
+app.use('/api/proposals', proposalRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // ── Production: serve React build ─────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

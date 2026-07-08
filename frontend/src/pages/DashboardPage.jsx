@@ -1,5 +1,8 @@
-import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { setDashboardStats, setDashboardLoading } from '../redux/dashboardSlice';
+import dashboardService from '../services/dashboardService';
 
 const roleBadgeClass = {
   client: 'badge-client',
@@ -8,14 +11,172 @@ const roleBadgeClass = {
 };
 
 const DashboardPage = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { stats, loading } = useSelector((state) => state.dashboard);
 
-  const stats = [
-    { label: 'Active Projects', value: '0', icon: '📋', color: 'bg-blue-50 text-blue-600' },
-    { label: 'Completed', value: '0', icon: '✅', color: 'bg-green-50 text-green-600' },
-    { label: 'Total Earnings', value: '$0', icon: '💰', color: 'bg-yellow-50 text-yellow-600' },
-    { label: 'Reviews', value: '0', icon: '⭐', color: 'bg-violet-50 text-violet-600' },
+  useEffect(() => {
+    const fetchStats = async () => {
+      dispatch(setDashboardLoading(true));
+      try {
+        if (user?.role === 'client' || user?.role === 'admin') {
+          const { data } = await dashboardService.getClientDashboard();
+          dispatch(setDashboardStats(data.data));
+        } else if (user?.role === 'freelancer') {
+          const { data } = await dashboardService.getFreelancerDashboard();
+          dispatch(setDashboardStats(data.data));
+        }
+      } catch {
+        // Stats will just be null — not a critical error
+      } finally {
+        dispatch(setDashboardLoading(false));
+      }
+    };
+    if (user) fetchStats();
+  }, [user, dispatch]);
+
+  const clientStats = [
+    {
+      label: 'Total Gigs',
+      value: stats?.totalGigs ?? '—',
+      icon: '📋',
+      color: 'bg-blue-50 text-blue-600',
+    },
+    {
+      label: 'Open Gigs',
+      value: stats?.openGigs ?? '—',
+      icon: '🟢',
+      color: 'bg-green-50 text-green-600',
+    },
+    {
+      label: 'Active Gigs',
+      value: stats?.activeGigs ?? '—',
+      icon: '⚡',
+      color: 'bg-yellow-50 text-yellow-600',
+    },
+    {
+      label: 'Completed',
+      value: stats?.completedGigs ?? '—',
+      icon: '✅',
+      color: 'bg-violet-50 text-violet-600',
+    },
+    {
+      label: 'Proposals Received',
+      value: stats?.totalProposalsReceived ?? '—',
+      icon: '📩',
+      color: 'bg-pink-50 text-pink-600',
+    },
   ];
+
+  const freelancerStats = [
+    {
+      label: 'Total Proposals',
+      value: stats?.totalProposals ?? '—',
+      icon: '📝',
+      color: 'bg-blue-50 text-blue-600',
+    },
+    {
+      label: 'Pending',
+      value: stats?.pendingProposals ?? '—',
+      icon: '⏳',
+      color: 'bg-yellow-50 text-yellow-600',
+    },
+    {
+      label: 'Accepted',
+      value: stats?.acceptedProposals ?? '—',
+      icon: '✅',
+      color: 'bg-green-50 text-green-600',
+    },
+    {
+      label: 'Active Jobs',
+      value: stats?.activeJobs ?? '—',
+      icon: '💼',
+      color: 'bg-violet-50 text-violet-600',
+    },
+  ];
+
+  const displayStats =
+    user?.role === 'freelancer' ? freelancerStats : clientStats;
+
+  const clientQuickActions = [
+    {
+      to: '/gigs/create',
+      label: 'Post a Gig',
+      sub: 'Attract top freelancers',
+      bg: 'bg-green-50',
+      icon: (
+        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+    },
+    {
+      to: '/my-gigs',
+      label: 'My Gigs',
+      sub: 'Manage your postings',
+      bg: 'bg-blue-50',
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
+    },
+    {
+      to: '/profile',
+      label: 'Edit Profile',
+      sub: 'Update your info',
+      bg: 'bg-primary-50',
+      icon: (
+        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const freelancerQuickActions = [
+    {
+      to: '/gigs',
+      label: 'Browse Gigs',
+      sub: 'Find your next project',
+      bg: 'bg-green-50',
+      icon: (
+        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+    },
+    {
+      to: '/my-proposals',
+      label: 'My Proposals',
+      sub: 'Track your applications',
+      bg: 'bg-blue-50',
+      icon: (
+        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      to: '/profile',
+      label: 'Edit Profile',
+      sub: 'Showcase your skills',
+      bg: 'bg-primary-50',
+      icon: (
+        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const quickActions =
+    user?.role === 'freelancer' ? freelancerQuickActions : clientQuickActions;
 
   return (
     <div className="space-y-6">
@@ -56,63 +217,47 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="card">
-            <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center text-xl mb-3`}>
-              {stat.icon}
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-          </div>
-        ))}
+      <div className={`grid gap-4 ${user?.role === 'freelancer' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`}>
+        {loading
+          ? displayStats.map((stat) => (
+              <div key={stat.label} className="card animate-pulse">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 mb-3" />
+                <div className="h-7 bg-gray-100 rounded w-12 mb-1" />
+                <div className="h-3 bg-gray-100 rounded w-20" />
+              </div>
+            ))
+          : displayStats.map((stat) => (
+              <div key={stat.label} className="card">
+                <div
+                  className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center text-xl mb-3`}
+                >
+                  {stat.icon}
+                </div>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+              </div>
+            ))}
       </div>
 
       {/* Quick actions */}
       <div className="card">
         <h2 className="text-sm font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link
-            to="/profile"
-            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
-          >
-            <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Update Profile</p>
-              <p className="text-xs text-gray-500">Add skills &amp; bio</p>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 opacity-60 cursor-not-allowed">
-            <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Browse Jobs</p>
-              <p className="text-xs text-gray-500">Coming in Week 2</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 opacity-60 cursor-not-allowed">
-            <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Messages</p>
-              <p className="text-xs text-gray-500">Coming in Week 2</p>
-            </div>
-          </div>
+          {quickActions.map((action) => (
+            <Link
+              key={action.to}
+              to={action.to}
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <div className={`w-9 h-9 rounded-lg ${action.bg} flex items-center justify-center`}>
+                {action.icon}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{action.label}</p>
+                <p className="text-xs text-gray-500">{action.sub}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -122,7 +267,10 @@ const DashboardPage = () => {
           <h2 className="text-sm font-semibold text-gray-900 mb-3">Your Skills</h2>
           <div className="flex flex-wrap gap-2">
             {user.skills.map((skill) => (
-              <span key={skill} className="px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium">
+              <span
+                key={skill}
+                className="px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium"
+              >
                 {skill}
               </span>
             ))}

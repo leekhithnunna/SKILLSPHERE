@@ -9,6 +9,14 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 
+// Week 2 pages
+import BrowseGigsPage from './pages/BrowseGigsPage';
+import GigDetailsPage from './pages/GigDetailsPage';
+import CreateGigPage from './pages/CreateGigPage';
+import EditGigPage from './pages/EditGigPage';
+import MyGigsPage from './pages/MyGigsPage';
+import MyProposalsPage from './pages/MyProposalsPage';
+
 const App = () => {
   return (
     <Routes>
@@ -22,8 +30,19 @@ const App = () => {
       {/* ── Protected routes (require authentication) ── */}
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
+          {/* Week 1 */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Week 2 — Gigs */}
+          <Route path="/gigs" element={<BrowseGigsPage />} />
+          <Route path="/gigs/create" element={<CreateGigPage />} />
+          <Route path="/gigs/edit/:id" element={<EditGigPage />} />
+          <Route path="/gigs/:id" element={<GigDetailsPage />} />
+          <Route path="/my-gigs" element={<MyGigsPage />} />
+
+          {/* Week 2 — Proposals */}
+          <Route path="/my-proposals" element={<MyProposalsPage />} />
         </Route>
       </Route>
 
