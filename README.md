@@ -98,6 +98,16 @@ npm run dev
 - **Deadline reminders** — already covered by the `node-cron` job added during infrastructure work (daily sweep, 24h-out email + notification to both parties)
 - Surfaced as a progress bar + timeline + post-update form on the gig detail page (visible once a gig is in-progress/completed)
 
+## Freelancer Analytics Dashboard
+
+New `/analytics` page (freelancer-only) pulling together data from across the app rather than a single collection:
+
+- **Profile views** — `User.profileViews`, incremented by `GET /api/users/:id` (module 3)
+- **Gig applications** — total proposal count + breakdown by status (pending/negotiating/accepted/rejected/withdrawn)
+- **Earnings statistics** — total earned (sum of released payments) and amount currently in escrow
+- **Monthly revenue chart** — released-payment totals grouped by month over the last 12 months (Recharts line chart)
+- **Client feedback analytics** — average per-criterion rating (communication/quality/timeliness/professionalism) plus the overall weighted reputation score, reusing the review breakdown logic from module 8
+
 ## Admin Dashboard
 
 All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
@@ -365,6 +375,7 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 |--------|----------|--------|-------------|
 | GET | `/api/dashboard/client` | Client/Admin | Client stats |
 | GET | `/api/dashboard/freelancer` | Freelancer/Admin | Freelancer stats |
+| GET | `/api/dashboard/freelancer/analytics` | Freelancer | Profile views, earnings, monthly revenue, feedback breakdown |
 
 ---
 

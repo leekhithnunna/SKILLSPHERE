@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getClientDashboard,
   getFreelancerDashboard,
+  getFreelancerAnalytics,
 } = require('../controllers/dashboardController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
@@ -16,6 +17,14 @@ router.get(
   protect,
   authorizeRoles('freelancer', 'admin'),
   getFreelancerDashboard
+);
+
+// @route   GET /api/dashboard/freelancer/analytics
+router.get(
+  '/freelancer/analytics',
+  protect,
+  authorizeRoles('freelancer'),
+  getFreelancerAnalytics
 );
 
 module.exports = router;
