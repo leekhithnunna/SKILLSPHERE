@@ -63,6 +63,10 @@ npm run dev
 - Redux auth slice with localStorage persistence
 - Role-based access control middleware
 - Dashboard layout with responsive Sidebar + Navbar
+- **Email verification** — signup sends a 24h verification link; unverified users see a "Resend email" prompt on their profile
+- **Password reset** — `/forgot-password` emails a 1h reset link; `/reset-password/:token` sets a new password
+- **Two-factor authentication (2FA)** — optional per-account toggle in Profile → Security; when enabled, login emails a 6-digit one-time code that must be verified before a session token is issued
+- **Google OAuth login** — "Continue with Google" button on Login/Register verifies the Google ID token server-side and links or creates an account (requires `GOOGLE_CLIENT_ID`, see [Manual setup steps](#manual-setup-steps-for-production-credentials))
 
 ---
 
@@ -101,7 +105,14 @@ npm run dev
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | POST | `/api/auth/register` | Public | Register user |
-| POST | `/api/auth/login` | Public | Login, returns JWT |
+| GET | `/api/auth/verify-email/:token` | Public | Verify email from emailed link |
+| POST | `/api/auth/resend-verification` | Private | Resend verification email |
+| POST | `/api/auth/login` | Public | Login, returns JWT (or `twoFactorRequired: true`) |
+| POST | `/api/auth/verify-2fa` | Public | Verify OTP `{ userId, otp }`, returns JWT |
+| PUT | `/api/auth/2fa` | Private | Enable/disable 2FA `{ enabled }` |
+| POST | `/api/auth/forgot-password` | Public | Email a password reset link |
+| PUT | `/api/auth/reset-password/:token` | Public | Set new password `{ password }` |
+| POST | `/api/auth/google` | Public | Login/register with a Google ID token `{ credential, role? }` |
 | POST | `/api/auth/logout` | Public | Clear cookie |
 | GET | `/api/auth/me` | Private | Get current user |
 

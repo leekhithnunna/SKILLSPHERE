@@ -1,11 +1,18 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import ProtectedRoute from './routes/ProtectedRoute';
 import PublicRoute from './routes/PublicRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import { connectSocket, disconnectSocket } from './services/socket';
 
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import TwoFactorPage from './pages/TwoFactorPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -18,6 +25,18 @@ import MyGigsPage from './pages/MyGigsPage';
 import MyProposalsPage from './pages/MyProposalsPage';
 
 const App = () => {
+  const { token, isAuthenticated } = useSelector((state) => state.auth);
+
+  // Keep the Socket.IO connection in lockstep with auth state — connects on
+  // login/refresh-with-token, disconnects on logout.
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      connectSocket(token);
+    } else {
+      disconnectSocket();
+    }
+  }, [isAuthenticated, token]);
+
   return (
     <Routes>
       {/* ── Public routes (redirect to /dashboard if already authenticated) ── */}
@@ -25,7 +44,13 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-2fa" element={<TwoFactorPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       </Route>
+
+      {/* ── Public regardless of auth state ── */}
+      <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
       {/* ── Protected routes (require authentication) ── */}
       <Route element={<ProtectedRoute />}>

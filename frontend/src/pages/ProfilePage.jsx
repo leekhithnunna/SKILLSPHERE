@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUser } from '../redux/authSlice';
 import api from '../services/api';
+import authService from '../services/authService';
 
 const roleBadgeClass = {
   client: 'badge-client',
@@ -18,6 +19,35 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [skillInput, setSkillInput] = useState('');
+
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      const { data } = await authService.resendVerification();
+      setResendMessage(data.message || 'Verification email sent');
+    } catch (err) {
+      setResendMessage(err.response?.data?.message || 'Failed to send verification email');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleToggleTwoFactor = async () => {
+    setTwoFactorLoading(true);
+    try {
+      const { data } = await authService.setTwoFactor(!user.twoFactorEnabled);
+      dispatch(setUser(data.user));
+    } catch {
+      // no-op — button simply won't reflect the change
+    } finally {
+      setTwoFactorLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -325,6 +355,48 @@ const ProfilePage = () => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Security */}
+      <div className="card space-y-5">
+        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Security</h2>
+
+        {!user?.isVerified && (
+          <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200 flex items-center justify-between gap-3">
+            <p className="text-yellow-700 text-sm">Your email address is not verified yet.</p>
+            <button
+              onClick={handleResendVerification}
+              className="btn-secondary shrink-0 text-xs px-3 py-1.5"
+              disabled={resendLoading}
+            >
+              {resendLoading ? 'Sending...' : 'Resend email'}
+            </button>
+          </div>
+        )}
+        {resendMessage && <p className="text-xs text-gray-500">{resendMessage}</p>}
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Two-factor authentication</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Require a one-time email code every time you sign in.
+            </p>
+          </div>
+          <button
+            onClick={handleToggleTwoFactor}
+            disabled={twoFactorLoading}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+              user?.twoFactorEnabled ? 'bg-primary-600' : 'bg-gray-200'
+            }`}
+            aria-pressed={user?.twoFactorEnabled}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                user?.twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { GoogleLogin } from '@react-oauth/google';
 import { login } from '../redux/authSlice';
 import api from '../services/api';
+import authService from '../services/authService';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -24,12 +28,29 @@ const LoginPage = () => {
 
     try {
       const { data } = await api.post('/auth/login', formData);
+
+      if (data.twoFactorRequired) {
+        navigate('/verify-2fa', { state: { userId: data.userId } });
+        return;
+      }
+
       dispatch(login({ user: data.user, token: data.token }));
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    try {
+      const { data } = await authService.googleLogin(credentialResponse.credential);
+      dispatch(login({ user: data.user, token: data.token }));
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google sign-in failed.');
     }
   };
 
@@ -76,7 +97,12 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="form-label">Password</label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="form-label">Password</label>
+                <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"
@@ -109,6 +135,23 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+
+          {googleClientId && (
+            <>
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">OR</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google sign-in failed.')}
+                  width="320"
+                />
+              </div>
+            </>
+          )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don&apos;t have an account?{' '}
