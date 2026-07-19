@@ -15,6 +15,7 @@ const CreateGigPage = () => {
     budgetMax: '',
     deadline: '',
     skillsRequired: [],
+    location: { city: '', country: '' },
   });
   const [skillInput, setSkillInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,10 @@ const CreateGigPage = () => {
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
+  };
+
+  const handleLocationChange = (e) => {
+    setFormData((prev) => ({ ...prev, location: { ...prev.location, [e.target.name]: e.target.value } }));
   };
 
   const addSkill = () => {
@@ -178,6 +183,33 @@ const CreateGigPage = () => {
               onChange={handleChange}
               className="form-input"
               min={new Date().toISOString().split('T')[0]}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="form-label">City (optional)</label>
+            <input
+              name="city"
+              type="text"
+              value={formData.location.city}
+              onChange={handleLocationChange}
+              className="form-input"
+              placeholder="e.g. Hyderabad"
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="form-label">Country (optional)</label>
+            <input
+              name="country"
+              type="text"
+              value={formData.location.country}
+              onChange={handleLocationChange}
+              className="form-input"
+              placeholder="e.g. India"
               disabled={loading}
             />
           </div>

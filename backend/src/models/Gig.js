@@ -49,6 +49,10 @@ const gigSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    location: {
+      city: { type: String, default: '' },
+      country: { type: String, default: '' },
+    },
     deadline: {
       type: Date,
     },

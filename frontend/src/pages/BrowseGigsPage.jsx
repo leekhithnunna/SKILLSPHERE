@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import gigService from '../services/gigService';
+import matchingService from '../services/matchingService';
 
 const statusColors = {
   open: 'bg-green-100 text-green-700',
@@ -10,6 +12,7 @@ const statusColors = {
 };
 
 const BrowseGigsPage = () => {
+  const { user } = useSelector((state) => state.auth);
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +28,16 @@ const BrowseGigsPage = () => {
     status: '',
   });
   const [appliedFilters, setAppliedFilters] = useState({});
+
+  const [recommended, setRecommended] = useState([]);
+  const [trendingSkills, setTrendingSkills] = useState([]);
+
+  useEffect(() => {
+    if (user?.role === 'freelancer') {
+      matchingService.getRecommendedGigs().then(({ data }) => setRecommended(data.data)).catch(() => {});
+    }
+    matchingService.getTrendingSkills().then(({ data }) => setTrendingSkills(data.data)).catch(() => {});
+  }, [user]);
 
   const fetchGigs = useCallback(async () => {
     setLoading(true);
@@ -72,6 +85,49 @@ const BrowseGigsPage = () => {
           <p className="text-sm text-gray-500 mt-0.5">{total} gigs available</p>
         </div>
       </div>
+
+      {/* AI-recommended gigs */}
+      {recommended.length > 0 && (
+        <div className="card">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-1">Recommended For You</h2>
+          <p className="text-xs text-gray-400 mb-3">Matched to your skills by our AI matching engine</p>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {recommended.map((r) => (
+              <Link
+                key={r.gig._id}
+                to={`/gigs/${r.gig._id}`}
+                className="shrink-0 w-56 p-3 rounded-lg border border-gray-100 hover:border-primary-200 hover:shadow-sm transition-all"
+              >
+                <p className="text-sm font-semibold text-gray-900 line-clamp-1">{r.gig.title}</p>
+                <p className="text-xs text-primary-600 font-medium mt-1">{Math.round(r.skillScore * 100)}% match</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {r.gig.budgetMin === r.gig.budgetMax ? `$${r.gig.budgetMin}` : `$${r.gig.budgetMin}–$${r.gig.budgetMax}`}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trending skills */}
+      {trendingSkills.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Trending:</span>
+          {trendingSkills.map((t) => (
+            <button
+              key={t.skill}
+              onClick={() => {
+                setFilters((prev) => ({ ...prev, skill: t.skill }));
+                setAppliedFilters((prev) => ({ ...prev, skill: t.skill }));
+                setPage(1);
+              }}
+              className="px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium hover:bg-primary-100 transition-colors"
+            >
+              {t.skill} ({t.count})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filters */}
       <form onSubmit={handleSearch} className="card">

@@ -10,7 +10,7 @@ const notify = require('../utils/notify');
  * @access  Private — client, admin
  */
 const createGig = async (req, res) => {
-  const { title, description, budgetMin, budgetMax, skillsRequired, deadline, status, milestones } = req.body;
+  const { title, description, budgetMin, budgetMax, skillsRequired, deadline, status, milestones, location } = req.body;
 
   if (!title || !description || !budgetMin || !budgetMax) {
     return res.status(400).json({
@@ -28,6 +28,7 @@ const createGig = async (req, res) => {
     deadline: deadline || null,
     status: status || 'open',
     milestones: milestones || [],
+    location: location || undefined,
     client: req.user._id,
   });
 
@@ -147,7 +148,7 @@ const updateGig = async (req, res) => {
     });
   }
 
-  const { title, description, budgetMin, budgetMax, skillsRequired, deadline, status, milestones } = req.body;
+  const { title, description, budgetMin, budgetMax, skillsRequired, deadline, status, milestones, location } = req.body;
 
   if (title !== undefined) gig.title = title;
   if (description !== undefined) gig.description = description;
@@ -157,6 +158,7 @@ const updateGig = async (req, res) => {
   if (deadline !== undefined) gig.deadline = deadline;
   if (status !== undefined) gig.status = status;
   if (milestones !== undefined) gig.milestones = milestones;
+  if (location !== undefined) gig.location = location;
 
   await gig.save();
 

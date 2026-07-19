@@ -12,6 +12,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const matchingRoutes = require('./routes/matchingRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/matching', matchingRoutes);
 
 // ── Production: serve React build ─────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

@@ -70,6 +70,16 @@ npm run dev
 
 ---
 
+## AI-Powered Job Matching
+
+Goes beyond simple skill-tag filtering (PDF Module 2's example: a client posts a React job and the system should surface the top nearby, best-fit freelancers):
+
+- **Skill similarity scoring** (`backend/src/utils/skillSimilarity.js`) — uses the Hugging Face Inference API (`sentence-transformers/all-MiniLM-L6-v2` embeddings, cosine similarity) when `HUGGINGFACE_API_KEY` is set; otherwise falls back to local Jaccard similarity over normalized skill sets. Falls back automatically on any API error too, so matching never breaks because of a flaky third party.
+- **Freelancer recommendations for a gig** — `GET /api/matching/gigs/:gigId/recommendations` scores every freelancer as `0.6×skillSimilarity + 0.25×weightedReputation + 0.15×locationMatch` (same city > same country > none) and returns the top 10. Surfaced on the client's Gig Proposals page with one-click invite.
+- **Personalized gig recommendations for freelancers** — `GET /api/matching/recommended-gigs` scores open gigs as `0.85×skillSimilarity + 0.15×recency` against the freelancer's skills. Surfaced as a "Recommended For You" strip on Browse Gigs.
+- **Trending skills detection** — `GET /api/matching/trending-skills` aggregates `skillsRequired` across gigs posted in the last 30 days; shown as clickable filter chips on Browse Gigs.
+- Added optional `location {city, country}` to `Gig` (mirroring `User.location`) to power the hyperlocal part of matching.
+
 ## Freelancer Professional Profiles
 
 A dedicated "Professional Profile" page (freelancer-only, linked from the sidebar) extends the basic profile with:
@@ -267,6 +277,13 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | GET | `/api/payments/my` | Private | Your transaction history |
 | GET | `/api/payments/gig/:gigId` | Private (participant) | Payments for one gig |
 | PUT | `/api/gigs/:id/milestones/:milestoneId/complete` | Freelancer | Mark a milestone complete for client review |
+
+### AI Matching
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/matching/gigs/:gigId/recommendations` | Gig Owner/Admin | Top 10 matched freelancers |
+| GET | `/api/matching/recommended-gigs` | Freelancer | Top 10 matched open gigs |
+| GET | `/api/matching/trending-skills` | Public | Top 10 skills across gigs from the last 30 days |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |

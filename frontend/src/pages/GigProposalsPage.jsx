@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import gigService from '../services/gigService';
 import proposalService from '../services/proposalService';
+import matchingService from '../services/matchingService';
+import resolveFileUrl from '../utils/resolveFileUrl';
 
 const statusConfig = {
   pending: { label: 'Pending', classes: 'bg-yellow-100 text-yellow-700' },
@@ -124,6 +126,8 @@ const GigProposalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [invitingId, setInvitingId] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -133,10 +137,29 @@ const GigProposalsPage = () => {
       ]);
       setGig(gigRes.data.data);
       setProposals(proposalsRes.data.data);
+
+      if (gigRes.data.data.status === 'open') {
+        matchingService
+          .getFreelancerRecommendations(id)
+          .then(({ data }) => setRecommendations(data.data))
+          .catch(() => {});
+      }
     } catch {
       setError('Failed to load proposals.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInviteRecommended = async (freelancerId) => {
+    setInvitingId(freelancerId);
+    try {
+      await gigService.inviteFreelancerById(id, freelancerId);
+      setRecommendations((prev) => prev.filter((r) => r.freelancer._id !== freelancerId));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to invite freelancer.');
+    } finally {
+      setInvitingId(null);
     }
   };
 
@@ -211,6 +234,42 @@ const GigProposalsPage = () => {
 
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">{error}</div>
+      )}
+
+      {recommendations.length > 0 && (
+        <div className="card">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-1">AI-Recommended Freelancers</h2>
+          <p className="text-xs text-gray-400 mb-3">Ranked by skill match, reputation, and location</p>
+          <div className="space-y-2">
+            {recommendations.map((r) => (
+              <div key={r.freelancer._id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50">
+                <Link to={`/users/${r.freelancer._id}`} className="flex items-center gap-3 min-w-0 group">
+                  {r.freelancer.profileImage ? (
+                    <img src={resolveFileUrl(r.freelancer.profileImage)} alt={r.freelancer.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+                      <span className="text-primary-700 font-semibold text-xs">{r.freelancer.name?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600 truncate">{r.freelancer.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {Math.round(r.skillScore * 100)}% skill match
+                      {r.freelancer.reviewCount > 0 && ` · ${r.freelancer.reputationScore}★ (${r.freelancer.reviewCount})`}
+                    </p>
+                  </div>
+                </Link>
+                <button
+                  onClick={() => handleInviteRecommended(r.freelancer._id)}
+                  disabled={invitingId === r.freelancer._id}
+                  className="btn-secondary text-xs py-1.5 px-3 shrink-0"
+                >
+                  {invitingId === r.freelancer._id ? 'Inviting...' : 'Invite'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {proposals.length === 0 ? (

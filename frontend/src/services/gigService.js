@@ -9,6 +9,7 @@ const gigService = {
   updateGig: (id, data) => api.put(`/gigs/${id}`, data),
   deleteGig: (id) => api.delete(`/gigs/${id}`),
   inviteFreelancer: (id, email) => api.post(`/gigs/${id}/invite`, { email }),
+  inviteFreelancerById: (id, freelancerId) => api.post(`/gigs/${id}/invite`, { freelancerId }),
   addAttachment: (id, formData) =>
     api.post(`/gigs/${id}/attachments`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
