@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux';
+import NotificationBell from './NotificationBell';
 
 const roleBadgeClass = {
   client: 'badge-client',
@@ -25,6 +26,8 @@ const Navbar = () => {
 
         {/* Right: User info */}
         <div className="flex items-center gap-3">
+          <NotificationBell />
+
           {/* Avatar */}
           <div className="relative">
             {user?.profileImage ? (

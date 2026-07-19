@@ -129,6 +129,12 @@ Built on the Socket.IO server added in the infrastructure commit:
 - "Message" buttons added to the gig detail page (client ↔ accepted freelancer) and the public profile page
 - WebRTC video calls (listed as *optional* in the spec) were **not** implemented — deliberately out of scope for this pass; the conversation model is ready to carry a `call:*` signaling event set if added later
 
+### Notification System
+- Bell icon in the navbar (every role) with an unread-count badge, dropdown list, "mark all read", and click-to-navigate via each notification's `link`
+- Backed by the `Notification` model + `notify()` helper added during infrastructure work — this commit adds the missing list/read REST API and the frontend UI that actually surfaces them
+- Real-time delivery via the `notification:new` Socket.IO event (prepends to the dropdown live); REST fetch on load covers the history
+- Notification types wired so far: proposal received/accepted/rejected/negotiated, review added, message received, gig invite, deadline reminders (cron job) — payment events, dispute events, and gig-approval land with their respective modules below. "New gig posted" as a broad skill-matched alert to freelancers is covered instead by the AI job-matching recommendations feed (module 2) rather than a per-gig blast notification.
+
 ### Dashboard Analytics
 - **Client dashboard:** total gigs, open gigs, active gigs, completed gigs, proposals received
 - **Freelancer dashboard:** total proposals, pending, accepted, active jobs
@@ -235,6 +241,13 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | `message:send` | `{ conversationId, text, attachments }` (ack callback) | `typing:start` / `typing:stop` | `{ userId, conversationId }` |
 | `typing:start` / `typing:stop` | `conversationId` | `message:read` | `{ conversationId, userId }` |
 | `message:read` | `{ conversationId }` | `notification:new` | notification doc (any type, see below) |
+
+### Notifications
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/notifications` | Private | Paginated list + `unreadCount` |
+| PUT | `/api/notifications/:id/read` | Private | Mark one as read |
+| PUT | `/api/notifications/read-all` | Private | Mark all as read |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |
