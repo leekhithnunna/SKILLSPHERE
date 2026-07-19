@@ -28,6 +28,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ── Locally-stored uploads (used when Cloudinary isn't configured) ───────────
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

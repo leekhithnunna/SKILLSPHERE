@@ -1,14 +1,26 @@
 # SkillSphere
 
-An AI-powered freelance marketplace connecting clients and freelancers.
+SkillSphere is a full-stack MERN platform connecting clients with freelancers in a hyperlocal environment — AI-powered job matching, milestone/escrow payments, weighted reputation scoring, real-time collaboration, and admin analytics.
 
 ---
 
 ## Tech Stack
 
-**Backend:** Node.js · Express · MongoDB (Mongoose) · JWT Auth  
-**Frontend:** React 18 · Redux Toolkit · React Router v6 · Tailwind CSS · Vite  
+**Backend:** Node.js · Express · MongoDB (Mongoose) · JWT Auth · Socket.IO · Nodemailer · Cloudinary · Razorpay · node-cron  
+**Frontend:** React 18 · Redux Toolkit · React Router v6 · Tailwind CSS · Vite · Socket.IO client · Recharts  
 **Tooling:** Concurrently · Nodemon · ESLint
+
+### Third-party services — dev-mode fallbacks
+
+Every third-party integration below runs in a **mock/local mode by default** so the app is fully runnable without any paid accounts. See [Manual setup steps](#manual-setup-steps-for-production-credentials) for how to swap in real credentials.
+
+| Service | Used for | Without credentials |
+|---|---|---|
+| Nodemailer | Verification/reset/notification emails | Auto-creates a free Ethereal test inbox; preview URL logged to console |
+| Cloudinary | Avatars, portfolio images, resumes, chat files, dispute evidence | Falls back to local disk storage under `backend/uploads/`, served at `/uploads/*` |
+| Razorpay | Escrow/milestone payments | Falls back to an in-process mock gateway that simulates orders/captures/refunds |
+| Google OAuth | "Continue with Google" login | Button is present but login will fail until `GOOGLE_CLIENT_ID` is set |
+| Hugging Face | AI job-matching scores | Falls back to a local skill-overlap + rating similarity algorithm |
 
 ---
 
@@ -180,4 +192,26 @@ skillsphere/
 
 - **Week 1** ✅ Auth, roles, profile, dashboard
 - **Week 2** ✅ Gig marketplace, proposal system, search & filtering, dashboard analytics
-- **Week 3** 🔜 Messaging, notifications, payments
+- **Week 3** 🚧 In progress — real-time messaging, notifications, reviews, AI matching
+- **Week 4** 🔜 Payments, admin dashboard, scheduler, disputes, progress tracker, freelancer analytics, security hardening
+
+### Infrastructure (chore)
+
+Foundational plumbing added ahead of the features that depend on it:
+- Nodemailer email service (`backend/src/config/email.js`, `backend/src/utils/sendEmail.js`) with automatic Ethereal fallback in dev
+- File upload pipeline (`backend/src/utils/uploadFile.js`, `backend/src/middleware/uploadMiddleware.js`) — Cloudinary if configured, else local disk under `backend/uploads/` served at `/uploads/*`
+- Socket.IO server (`backend/src/socket/index.js`) — JWT-authenticated sockets, per-user rooms for notifications, per-conversation rooms for chat (messaging, typing indicators, read receipts)
+- `Conversation`, `Message`, and `Notification` Mongoose models plus a shared `notify()` helper (`backend/src/utils/notify.js`) that every feature (proposals, payments, reviews, etc.) will push through consistently
+- Daily deadline-reminder cron job (`backend/src/jobs/deadlineReminderJob.js`, `node-cron`) — notifies client + assigned freelancer 24h before an in-progress gig's deadline
+- Frontend Socket.IO client wrapper (`frontend/src/services/socket.js`) and upload-URL resolver (`frontend/src/utils/resolveFileUrl.js`)
+
+## Manual setup steps for production credentials
+
+These are optional in development (everything has a working fallback) but required before a real deployment:
+
+1. **Email** — set `EMAIL_USER`/`EMAIL_PASS` in `backend/.env` to a real SMTP account (e.g. a Gmail App Password) so verification/reset/notification emails reach real inboxes.
+2. **Cloudinary** — create a free account at cloudinary.com, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+3. **Razorpay** — create a Razorpay account, generate **test-mode** keys first, set `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET`. Swap for live keys only after a real go-live review.
+4. **Google OAuth** — create an OAuth Client ID in Google Cloud Console (Web application), add `http://localhost:5173` as an authorized origin, set `GOOGLE_CLIENT_ID` in both `backend/.env` and as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env`.
+5. **Hugging Face (optional)** — set `HUGGINGFACE_API_KEY` to use a hosted embedding model for job matching instead of the local fallback.
+6. **MongoDB Atlas** — replace `MONGO_URI` with your Atlas connection string for a shared/production database.

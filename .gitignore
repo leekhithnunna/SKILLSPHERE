@@ -8,3 +8,5 @@ build/
 .DS_Store
 coverage/
 logs/
+backend/uploads/*
+!backend/uploads/.gitkeep
