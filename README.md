@@ -98,6 +98,16 @@ npm run dev
 - **Deadline reminders** — already covered by the `node-cron` job added during infrastructure work (daily sweep, 24h-out email + notification to both parties)
 - Surfaced as a progress bar + timeline + post-update form on the gig detail page (visible once a gig is in-progress/completed)
 
+## Security Hardening
+
+Closes out the Week 4 timeline item:
+
+- **Helmet** — standard security headers (X-Content-Type-Options, X-Frame-Options, etc.). `contentSecurityPolicy` is explicitly disabled since its strict defaults would block the Razorpay Checkout script, Google Identity Services, and Socket.IO's dev-mode cross-origin polling; the other protections stay on.
+- **Rate limiting** (`express-rate-limit`) — 300 req/15min on all `/api/*` routes as a general abuse backstop, tightened to 20 req/15min on `/api/auth/*` to slow down credential-stuffing/brute-force attempts
+- **NoSQL injection prevention** (`express-mongo-sanitize`) — strips `$`-prefixed operator keys from `req.body`/`req.query`/`req.params` before they reach any Mongoose query
+- **Request body size limits** — capped at 10mb on JSON/urlencoded bodies (file uploads already had their own per-type limits from the infrastructure commit: 5MB images, 10MB documents, 15MB generic)
+- Pre-existing protections carried forward: bcrypt password hashing, JWT auth, role-based access control on every mutating route, Mongoose schema validation
+
 ## Freelancer Analytics Dashboard
 
 New `/analytics` page (freelancer-only) pulling together data from across the app rather than a single collection:
@@ -415,8 +425,10 @@ skillsphere/
 
 - **Week 1** ✅ Auth, roles, profile, dashboard
 - **Week 2** ✅ Gig marketplace, proposal system, search & filtering, dashboard analytics
-- **Week 3** 🚧 In progress — real-time messaging, notifications, reviews, AI matching
-- **Week 4** 🔜 Payments, admin dashboard, scheduler, disputes, progress tracker, freelancer analytics, security hardening
+- **Week 3** ✅ Real-time messaging, notifications, reviews, AI matching
+- **Week 4** ✅ Payments, admin dashboard, scheduler, disputes, progress tracker, freelancer analytics, security hardening
+
+All 15 modules from the project spec are implemented — see each section above for details and [Manual setup steps](#manual-setup-steps-for-production-credentials) for what's mocked vs. needs real credentials.
 
 ### Infrastructure (chore)
 

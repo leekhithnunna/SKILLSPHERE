@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 const path = require('path');
 
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiters');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const gigRoutes = require('./routes/gigRoutes');
@@ -20,6 +23,13 @@ const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// ── Security headers ──────────────────────────────────────────────────────────
+// contentSecurityPolicy is disabled: its strict defaults would block the
+// Razorpay Checkout script, Google Identity Services, and Socket.IO's
+// cross-origin polling in development. The other helmet protections
+// (X-Content-Type-Options, X-Frame-Options, etc.) stay on.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
 // ── CORS ─────────────────────────────────────────────────────────────────────
 app.use(
   cors({
@@ -32,9 +42,16 @@ app.use(
 );
 
 // ── Body parsing & cookies ────────────────────────────────────────────────────
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// ── Prevent NoSQL injection via $-operator keys in body/query/params ─────────
+app.use(mongoSanitize());
+
+// ── Rate limiting ──────────────────────────────────────────────────────────────
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter);
 
 // ── Locally-stored uploads (used when Cloudinary isn't configured) ───────────
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
