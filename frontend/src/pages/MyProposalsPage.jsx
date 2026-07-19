@@ -4,6 +4,7 @@ import proposalService from '../services/proposalService';
 
 const statusConfig = {
   pending: { label: 'Pending', classes: 'bg-yellow-100 text-yellow-700' },
+  negotiating: { label: 'Negotiating', classes: 'bg-purple-100 text-purple-700' },
   accepted: { label: 'Accepted', classes: 'bg-green-100 text-green-700' },
   rejected: { label: 'Rejected', classes: 'bg-red-100 text-red-600' },
   withdrawn: { label: 'Withdrawn', classes: 'bg-gray-100 text-gray-500' },
@@ -14,6 +15,29 @@ const MyProposalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [withdrawingId, setWithdrawingId] = useState(null);
+  const [counterFormId, setCounterFormId] = useState(null);
+  const [counterAmount, setCounterAmount] = useState('');
+  const [counterMessage, setCounterMessage] = useState('');
+  const [negotiating, setNegotiating] = useState(false);
+
+  const handleNegotiate = async (proposalId) => {
+    if (!counterAmount) return;
+    setNegotiating(true);
+    try {
+      const { data } = await proposalService.negotiateProposal(proposalId, {
+        amount: Number(counterAmount),
+        message: counterMessage,
+      });
+      setProposals((prev) => prev.map((p) => (p._id === proposalId ? data.data : p)));
+      setCounterFormId(null);
+      setCounterAmount('');
+      setCounterMessage('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send counter-offer.');
+    } finally {
+      setNegotiating(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProposals = async () => {
@@ -117,6 +141,57 @@ const MyProposalsPage = () => {
                     </div>
 
                     <p className="text-sm text-gray-600 line-clamp-2">{proposal.coverLetter}</p>
+
+                    {proposal.negotiationHistory?.length > 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-gray-50 space-y-1.5">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Negotiation History</p>
+                        {proposal.negotiationHistory.map((n, idx) => (
+                          <p key={idx} className="text-xs text-gray-600">
+                            <span className="font-medium capitalize">{n.by}</span> countered with{' '}
+                            <span className="font-semibold text-primary-600">${n.amount}</span>
+                            {n.message && <span className="text-gray-400"> — "{n.message}"</span>}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {['pending', 'negotiating'].includes(proposal.status) && (
+                      <div className="mt-3">
+                        {counterFormId === proposal._id ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              placeholder="Counter ($)"
+                              value={counterAmount}
+                              onChange={(e) => setCounterAmount(e.target.value)}
+                              className="form-input w-32"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Optional message"
+                              value={counterMessage}
+                              onChange={(e) => setCounterMessage(e.target.value)}
+                              className="form-input flex-1"
+                            />
+                            <button
+                              onClick={() => handleNegotiate(proposal._id)}
+                              disabled={negotiating || !counterAmount}
+                              className="btn-secondary shrink-0 text-xs"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setCounterFormId(proposal._id)}
+                            className="text-xs text-primary-600 hover:underline font-medium"
+                          >
+                            Counter-offer
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {proposal.gig?.skillsRequired?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">

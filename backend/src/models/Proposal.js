@@ -29,9 +29,17 @@ const proposalSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+      enum: ['pending', 'negotiating', 'accepted', 'rejected', 'withdrawn'],
       default: 'pending',
     },
+    negotiationHistory: [
+      {
+        by: { type: String, enum: ['client', 'freelancer'], required: true },
+        amount: { type: Number, required: true, min: 1 },
+        message: { type: String, default: '' },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

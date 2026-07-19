@@ -1,5 +1,6 @@
 const Proposal = require('../models/Proposal');
 const Gig = require('../models/Gig');
+const notify = require('../utils/notify');
 
 /**
  * @desc    Submit a proposal on a gig
@@ -60,6 +61,13 @@ const createProposal = async (req, res) => {
 
   await proposal.populate('gig', 'title budgetMin budgetMax');
   await proposal.populate('freelancer', 'name profileImage');
+
+  await notify(gig.client, {
+    type: 'proposal_received',
+    title: 'New proposal received',
+    message: `${req.user.name} submitted a proposal for "${gig.title}"`,
+    link: `/gigs/${gig._id}`,
+  });
 
   res.status(201).json({ success: true, data: proposal });
 };
@@ -144,6 +152,57 @@ const updateProposal = async (req, res) => {
 };
 
 /**
+ * @desc    Negotiate a proposal's price — either the gig owner (client) or
+ *          the freelancer can counter-offer; each counter is appended to
+ *          negotiationHistory and moves the proposal to "negotiating"
+ * @route   PUT /api/proposals/:id/negotiate
+ * @access  Private — gig owner (client) or proposal owner (freelancer)
+ */
+const negotiateProposal = async (req, res) => {
+  const { amount, message } = req.body;
+
+  if (!amount || amount < 1) {
+    return res.status(400).json({ success: false, message: 'A valid counter-offer amount is required' });
+  }
+
+  const proposal = await Proposal.findById(req.params.id).populate('gig');
+
+  if (!proposal) {
+    return res.status(404).json({ success: false, message: 'Proposal not found' });
+  }
+
+  const isClient = proposal.gig.client.toString() === req.user._id.toString();
+  const isFreelancer = proposal.freelancer.toString() === req.user._id.toString();
+
+  if (!isClient && !isFreelancer) {
+    return res.status(403).json({ success: false, message: 'Not authorized to negotiate this proposal' });
+  }
+
+  if (!['pending', 'negotiating'].includes(proposal.status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Only pending or negotiating proposals can be countered',
+    });
+  }
+
+  const by = isClient ? 'client' : 'freelancer';
+
+  proposal.negotiationHistory.push({ by, amount, message: message || '' });
+  proposal.status = 'negotiating';
+  await proposal.save();
+
+  const counterpartId = isClient ? proposal.freelancer : proposal.gig.client;
+  await notify(counterpartId, {
+    type: 'proposal_negotiated',
+    title: 'New counter-offer',
+    message: `${req.user.name} countered with $${amount} on "${proposal.gig.title}"`,
+    link: `/gigs/${proposal.gig._id}`,
+  });
+
+  res.status(200).json({ success: true, data: proposal });
+};
+
+/**
  * @desc    Withdraw a proposal (sets status to withdrawn)
  * @route   DELETE /api/proposals/:id
  * @access  Private — proposal owner (freelancer)
@@ -198,25 +257,41 @@ const acceptProposal = async (req, res) => {
     });
   }
 
-  if (proposal.status !== 'pending') {
+  if (!['pending', 'negotiating'].includes(proposal.status)) {
     return res.status(400).json({
       success: false,
-      message: 'Only pending proposals can be accepted',
+      message: 'Only pending or negotiating proposals can be accepted',
     });
+  }
+
+  // If a negotiation happened, the last counter-offer becomes the final bid
+  if (proposal.negotiationHistory.length > 0) {
+    proposal.bidAmount = proposal.negotiationHistory[proposal.negotiationHistory.length - 1].amount;
   }
 
   // Accept this proposal
   proposal.status = 'accepted';
   await proposal.save();
 
-  // Reject all other pending proposals for this gig
+  // Reject all other pending/negotiating proposals for this gig
   await Proposal.updateMany(
-    { gig: proposal.gig._id, _id: { $ne: proposal._id }, status: 'pending' },
+    { gig: proposal.gig._id, _id: { $ne: proposal._id }, status: { $in: ['pending', 'negotiating'] } },
     { $set: { status: 'rejected' } }
   );
 
   // Set gig status to in-progress
   await Gig.findByIdAndUpdate(proposal.gig._id, { status: 'in-progress' });
+
+  await notify(
+    proposal.freelancer,
+    {
+      type: 'proposal_accepted',
+      title: 'Your proposal was accepted!',
+      message: `Your proposal for "${proposal.gig.title}" was accepted at $${proposal.bidAmount}`,
+      link: `/gigs/${proposal.gig._id}`,
+    },
+    { email: true }
+  );
 
   res.status(200).json({ success: true, data: proposal, message: 'Proposal accepted' });
 };
@@ -240,15 +315,22 @@ const rejectProposal = async (req, res) => {
     });
   }
 
-  if (proposal.status !== 'pending') {
+  if (!['pending', 'negotiating'].includes(proposal.status)) {
     return res.status(400).json({
       success: false,
-      message: 'Only pending proposals can be rejected',
+      message: 'Only pending or negotiating proposals can be rejected',
     });
   }
 
   proposal.status = 'rejected';
   await proposal.save();
+
+  await notify(proposal.freelancer, {
+    type: 'proposal_rejected',
+    title: 'Proposal update',
+    message: `Your proposal for "${proposal.gig.title}" was not selected`,
+    link: `/gigs/${proposal.gig._id}`,
+  });
 
   res.status(200).json({ success: true, data: proposal, message: 'Proposal rejected' });
 };
@@ -258,6 +340,7 @@ module.exports = {
   getMyProposals,
   getProposalsByGig,
   updateProposal,
+  negotiateProposal,
   withdrawProposal,
   acceptProposal,
   rejectProposal,

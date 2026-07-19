@@ -302,11 +302,11 @@ const GigDetailsPage = () => {
           )}
           {isClient && isOwner && (
             <>
+              <Link to={`/gigs/${gig._id}/proposals`} className="btn-primary">
+                View Proposals
+              </Link>
               <Link to={`/gigs/edit/${gig._id}`} className="btn-secondary">
                 Edit Gig
-              </Link>
-              <Link to={`/my-gigs`} className="btn-secondary">
-                View My Gigs
               </Link>
             </>
           )}

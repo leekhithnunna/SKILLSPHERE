@@ -153,9 +153,7 @@ const MyGigsPage = () => {
                     Edit
                   </Link>
                   <button
-                    onClick={() =>
-                      navigate(`/gigs/${gig._id}`, { state: { viewProposals: true } })
-                    }
+                    onClick={() => navigate(`/gigs/${gig._id}/proposals`)}
                     className="btn-secondary text-xs py-1.5 px-3"
                   >
                     Proposals ({proposalCounts[gig._id] ?? 0})

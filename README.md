@@ -104,10 +104,12 @@ Basic identity fields (name, avatar, bio, tag-style skills, city/country locatio
 - Freelancers can submit proposals on open gigs
 - One proposal per freelancer per gig (duplicate blocked)
 - Proposal fields: cover letter, bid amount, estimated days
-- Client can accept or reject individual proposals
-- Accepting a proposal auto-rejects all other pending proposals
+- Client can accept or reject individual proposals from the new **Gig Proposals** page (`/gigs/:id/proposals`, linked from My Gigs and the gig detail page) — the accept/reject backend already existed but had no frontend UI until now
+- **Price negotiation** — either party can counter-offer via `PUT /api/proposals/:id/negotiate`; each counter is appended to `negotiationHistory` and the proposal moves to a `negotiating` status; accepting a negotiated proposal locks in the last countered amount as the final `bidAmount`
+- Accepting a proposal auto-rejects all other pending/negotiating proposals
 - Accepting a proposal moves gig status to `in-progress`
 - Freelancers can withdraw pending proposals
+- Notifications fire on proposal received/accepted/rejected/countered (real-time + email for accept)
 
 ### Dashboard Analytics
 - **Client dashboard:** total gigs, open gigs, active gigs, completed gigs, proposals received
@@ -185,8 +187,9 @@ Response:
 | GET | `/api/proposals/my` | Freelancer | Get own proposals |
 | GET | `/api/proposals/gig/:gigId` | Gig Owner/Admin | Get proposals for a gig |
 | PUT | `/api/proposals/:id` | Proposal Owner | Edit proposal |
+| PUT | `/api/proposals/:id/negotiate` | Client or Freelancer | Counter-offer `{ amount, message? }` |
 | DELETE | `/api/proposals/:id` | Proposal Owner | Withdraw proposal |
-| PUT | `/api/proposals/:id/accept` | Client (gig owner) | Accept proposal |
+| PUT | `/api/proposals/:id/accept` | Client (gig owner) | Accept proposal (locks in latest negotiated amount) |
 | PUT | `/api/proposals/:id/reject` | Client (gig owner) | Reject proposal |
 
 ### Dashboard

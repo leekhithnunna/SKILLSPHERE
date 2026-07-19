@@ -5,6 +5,7 @@ const {
   getMyProposals,
   getProposalsByGig,
   updateProposal,
+  negotiateProposal,
   withdrawProposal,
   acceptProposal,
   rejectProposal,
@@ -27,6 +28,9 @@ router
   .route('/:id')
   .put(protect, authorizeRoles('freelancer'), updateProposal)
   .delete(protect, authorizeRoles('freelancer'), withdrawProposal);
+
+// @route   PUT /api/proposals/:id/negotiate
+router.put('/:id/negotiate', protect, negotiateProposal);
 
 // @route   PUT /api/proposals/:id/accept
 router.put('/:id/accept', protect, authorizeRoles('client'), acceptProposal);
