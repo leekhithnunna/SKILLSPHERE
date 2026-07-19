@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import gigService from '../services/gigService';
 import reviewService from '../services/reviewService';
+import chatService from '../services/chatService';
 import ProposalForm from './ProposalForm';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
@@ -89,6 +90,11 @@ const GigDetailsPage = () => {
     } catch {
       // no-op
     }
+  };
+
+  const handleMessage = async (participantId) => {
+    const { data } = await chatService.getOrCreateConversation(participantId, gig._id);
+    navigate(`/messages/${data.data._id}`);
   };
 
   const handleSubmitReview = async (e, revieweeId) => {
@@ -318,24 +324,34 @@ const GigDetailsPage = () => {
         {gig.acceptedFreelancer && (
           <div className="pt-4 mt-4 border-t border-gray-100">
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Working with</h2>
-            <Link to={`/users/${gig.acceptedFreelancer._id}`} className="flex items-center gap-3 group">
-              {gig.acceptedFreelancer.profileImage ? (
-                <img
-                  src={resolveFileUrl(gig.acceptedFreelancer.profileImage)}
-                  alt={gig.acceptedFreelancer.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                  <span className="text-primary-700 font-semibold text-sm">
-                    {gig.acceptedFreelancer.name?.charAt(0)?.toUpperCase() || 'F'}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between gap-3">
+              <Link to={`/users/${gig.acceptedFreelancer._id}`} className="flex items-center gap-3 group">
+                {gig.acceptedFreelancer.profileImage ? (
+                  <img
+                    src={resolveFileUrl(gig.acceptedFreelancer.profileImage)}
+                    alt={gig.acceptedFreelancer.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                    <span className="text-primary-700 font-semibold text-sm">
+                      {gig.acceptedFreelancer.name?.charAt(0)?.toUpperCase() || 'F'}
+                    </span>
+                  </div>
+                )}
+                <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600">
+                  {gig.acceptedFreelancer.name}
+                </p>
+              </Link>
+              {(isOwner || user?._id === gig.acceptedFreelancer._id) && (
+                <button
+                  onClick={() => handleMessage(isOwner ? gig.acceptedFreelancer._id : gig.client._id)}
+                  className="btn-secondary text-xs py-1.5 px-3 shrink-0"
+                >
+                  Message
+                </button>
               )}
-              <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600">
-                {gig.acceptedFreelancer.name}
-              </p>
-            </Link>
+            </div>
           </div>
         )}
 

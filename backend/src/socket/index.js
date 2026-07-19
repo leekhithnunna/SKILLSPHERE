@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
+const notify = require('../utils/notify');
 
 let io = null;
 
@@ -74,15 +75,26 @@ const initSocket = (server) => {
 
         io.to(`conversation:${conversationId}`).emit('message:new', message);
 
-        // Notify participants who are not in the conversation room (e.g. offline / on another page)
-        conversation.participants
-          .filter((p) => p.toString() !== socket.userId)
-          .forEach((participantId) => {
-            io.to(`user:${participantId}`).emit('message:notify', {
-              conversationId,
-              message,
+        // Sockets currently viewing this conversation shouldn't also get a
+        // persisted "unread" notification — just the live message event.
+        const roomSockets = await io.in(`conversation:${conversationId}`).fetchSockets();
+        const viewerIds = new Set(roomSockets.map((s) => s.userId));
+
+        for (const participantId of conversation.participants) {
+          const participantIdStr = participantId.toString();
+          if (participantIdStr === socket.userId) continue;
+
+          io.to(`user:${participantIdStr}`).emit('message:notify', { conversationId, message });
+
+          if (!viewerIds.has(participantIdStr)) {
+            await notify(participantId, {
+              type: 'message_received',
+              title: `New message from ${message.sender.name}`,
+              message: message.text?.slice(0, 100) || 'Sent an attachment',
+              link: `/messages/${conversationId}`,
             });
-          });
+          }
+        }
 
         callback?.({ success: true, data: message });
       } catch (err) {

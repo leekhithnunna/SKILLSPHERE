@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import userService from '../services/userService';
 import reviewService from '../services/reviewService';
+import chatService from '../services/chatService';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
 const StarRow = ({ value }) => (
@@ -14,6 +16,7 @@ const StarRow = ({ value }) => (
 const PublicProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -39,6 +42,11 @@ const PublicProfilePage = () => {
     };
     fetchData();
   }, [id]);
+
+  const handleMessage = async () => {
+    const { data } = await chatService.getOrCreateConversation(id);
+    navigate(`/messages/${data.data._id}`);
+  };
 
   if (loading) {
     return (
@@ -104,6 +112,9 @@ const PublicProfilePage = () => {
               <p className="text-sm text-primary-600 font-semibold mt-1">${fp.hourlyRate}/hr</p>
             )}
           </div>
+          {currentUser && currentUser._id !== id && (
+            <button onClick={handleMessage} className="btn-secondary shrink-0">Message</button>
+          )}
         </div>
 
         {profile.bio && <p className="text-sm text-gray-600 mt-4">{profile.bio}</p>}

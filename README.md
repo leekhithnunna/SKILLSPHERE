@@ -119,6 +119,16 @@ Basic identity fields (name, avatar, bio, tag-style skills, city/country locatio
 - New public profile page (`/users/:id`) shows a freelancer's or client's bio, skills, portfolio, experience, weighted rating, and full review list
 - `GET /api/gigs/:id` now also returns `acceptedFreelancer` once a gig is in-progress/completed, so both parties (and future chat/payment features) know who they're paired with without needing owner-only proposal access
 
+### Real-Time Chat & Collaboration
+Built on the Socket.IO server added in the infrastructure commit:
+- Instant messaging between any two users, optionally scoped to a gig, via a new `/messages` page (sidebar-linked for every role)
+- Conversations + message history persisted (`Conversation`, `Message` models) and loaded via REST on open; new messages stream over `message:send`/`message:new` Socket.IO events
+- File sharing — upload via `POST /api/conversations/:id/attachments`, then sent as a message attachment
+- Typing indicators (`typing:start`/`typing:stop`) and read receipts (`message:read`, tracked per-message in `readBy[]`)
+- A user only gets a persisted "new message" notification if they're not already viewing that conversation's room — avoids spamming the bell while actively chatting
+- "Message" buttons added to the gig detail page (client ↔ accepted freelancer) and the public profile page
+- WebRTC video calls (listed as *optional* in the spec) were **not** implemented — deliberately out of scope for this pass; the conversation model is ready to carry a `call:*` signaling event set if added later
+
 ### Dashboard Analytics
 - **Client dashboard:** total gigs, open gigs, active gigs, completed gigs, proposals received
 - **Freelancer dashboard:** total proposals, pending, accepted, active jobs
@@ -206,6 +216,25 @@ Response:
 | POST | `/api/reviews` | Private | Leave a review `{ gigId, revieweeId, rating, comment?, criteria? }` |
 | GET | `/api/reviews/user/:userId` | Public | Get a user's non-flagged reviews + weighted reputation stats |
 | GET | `/api/reviews/my` | Private | Get reviews you've written |
+
+### Conversations (Chat)
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/conversations` | Private | List your conversations, most recent first |
+| POST | `/api/conversations` | Private | Get-or-create a conversation `{ participantId, gigId? }` |
+| GET | `/api/conversations/:id/messages` | Private (participant) | Paginated message history |
+| POST | `/api/conversations/:id/attachments` | Private (participant) | Upload a chat file (`multipart/form-data`, `file`) |
+
+#### Socket.IO events
+Connect with `io(url, { auth: { token } })` using the same JWT as REST.
+
+| Event (client → server) | Payload | Event (server → client) | Payload |
+|---|---|---|---|
+| `conversation:join` | `conversationId` | `message:new` | full message |
+| `conversation:leave` | `conversationId` | `message:notify` | `{ conversationId, message }` (fires even outside the room) |
+| `message:send` | `{ conversationId, text, attachments }` (ack callback) | `typing:start` / `typing:stop` | `{ userId, conversationId }` |
+| `typing:start` / `typing:stop` | `conversationId` | `message:read` | `{ conversationId, userId }` |
+| `message:read` | `{ conversationId }` | `notification:new` | notification doc (any type, see below) |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |
