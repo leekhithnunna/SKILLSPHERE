@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import gigService from '../services/gigService';
 import reviewService from '../services/reviewService';
 import chatService from '../services/chatService';
+import disputeService from '../services/disputeService';
 import ProposalForm from './ProposalForm';
 import MilestonePayments from '../components/MilestonePayments';
 import resolveFileUrl from '../utils/resolveFileUrl';
@@ -35,6 +36,11 @@ const GigDetailsPage = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMessage, setReviewMessage] = useState('');
+
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeForm, setDisputeForm] = useState({ reason: '', description: '' });
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [disputeMessage, setDisputeMessage] = useState('');
 
   const fetchGig = async () => {
     try {
@@ -98,6 +104,26 @@ const GigDetailsPage = () => {
       await gigService.completeMilestone(id, milestoneId, '');
     }
     await fetchGig();
+  };
+
+  const handleSubmitDispute = async (e) => {
+    e.preventDefault();
+    setDisputeSubmitting(true);
+    setDisputeMessage('');
+    try {
+      const { data } = await disputeService.createDispute({
+        gigId: id,
+        reason: disputeForm.reason,
+        description: disputeForm.description,
+      });
+      setDisputeMessage('Dispute raised. An admin will review it shortly.');
+      setDisputeForm({ reason: '', description: '' });
+      setTimeout(() => navigate(`/disputes/${data.data._id}`), 1200);
+    } catch (err) {
+      setDisputeMessage(err.response?.data?.message || 'Failed to raise dispute.');
+    } finally {
+      setDisputeSubmitting(false);
+    }
   };
 
   const handleMessage = async (participantId) => {
@@ -310,6 +336,39 @@ const GigDetailsPage = () => {
               </button>
             </form>
             {inviteMessage && <p className="text-xs text-gray-500 mt-1.5">{inviteMessage}</p>}
+          </div>
+        )}
+
+        {gig.acceptedFreelancer && ['in-progress', 'completed'].includes(gig.status) && (isOwner || user?._id === gig.acceptedFreelancer._id) && (
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900">Payment issue?</h2>
+              <button onClick={() => setShowDisputeForm((v) => !v)} className="text-xs text-red-600 hover:underline">
+                {showDisputeForm ? 'Cancel' : 'Raise a Dispute'}
+              </button>
+            </div>
+            {showDisputeForm && (
+              <form onSubmit={handleSubmitDispute} className="space-y-3 mt-3">
+                <input
+                  value={disputeForm.reason}
+                  onChange={(e) => setDisputeForm((p) => ({ ...p, reason: e.target.value }))}
+                  className="form-input"
+                  placeholder="Short reason (e.g. 'Milestone not delivered')"
+                  required
+                />
+                <textarea
+                  value={disputeForm.description}
+                  onChange={(e) => setDisputeForm((p) => ({ ...p, description: e.target.value }))}
+                  rows={3}
+                  className="form-input resize-none"
+                  placeholder="Describe what happened..."
+                />
+                <button type="submit" disabled={disputeSubmitting} className="btn-secondary text-sm">
+                  {disputeSubmitting ? 'Submitting...' : 'Submit Dispute'}
+                </button>
+                {disputeMessage && <p className="text-xs text-gray-500">{disputeMessage}</p>}
+              </form>
+            )}
           </div>
         )}
 

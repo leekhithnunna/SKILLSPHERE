@@ -13,6 +13,9 @@ const adminService = {
 
   getPayments: (params = {}) => api.get('/admin/payments', { params }),
   getFlaggedReviews: () => api.get('/admin/reviews/flagged'),
+
+  getDisputes: (params = {}) => api.get('/admin/disputes', { params }),
+  resolveDispute: (id, status, resolution) => api.put(`/admin/disputes/${id}/resolve`, { status, resolution }),
 };
 
 export default adminService;

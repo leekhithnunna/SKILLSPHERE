@@ -83,6 +83,13 @@ npm run dev
 - **Automatic scheduling** — bookings are confirmed immediately if the slot falls inside the freelancer's availability window and doesn't conflict with an existing confirmed booking; no manual approval step
 - New `/scheduler` page for both sides to view upcoming/past bookings and cancel
 
+## Dispute Resolution System
+
+- **Dispute request** — either the client or accepted freelancer on an in-progress/completed gig can raise a dispute against the other; notifies the other party and every admin
+- **Evidence upload** — either party attaches files (Cloudinary/local-disk) while a dispute is `open`/`under_review`
+- **Admin mediation** — admins review evidence and resolve with notes, either `resolved` or `rejected`; both parties are notified (email + real-time)
+- Logged to `AdminLog` alongside the other admin actions
+
 ## Admin Dashboard
 
 All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
@@ -324,6 +331,16 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | PUT | `/api/admin/gigs/:id/approve` | Admin | `{ approved }` — show/hide from public listing |
 | GET | `/api/admin/payments` | Admin | All transactions |
 | GET | `/api/admin/reviews/flagged` | Admin | Reviews flagged by fraud detection |
+| GET | `/api/admin/disputes` | Admin | Mediation queue |
+| PUT | `/api/admin/disputes/:id/resolve` | Admin | `{ status: 'resolved'\|'rejected', resolution }` |
+
+### Disputes
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/api/disputes` | Private (gig participant) | Raise a dispute `{ gigId, paymentId?, reason, description? }` |
+| GET | `/api/disputes/my` | Private | Disputes you raised or that were raised against you |
+| GET | `/api/disputes/:id` | Private (participant/admin) | Get one dispute |
+| POST | `/api/disputes/:id/evidence` | Private (participant) | Upload evidence (`multipart/form-data`, `file`) |
 
 ### Bookings (Scheduler)
 | Method | Endpoint | Access | Description |

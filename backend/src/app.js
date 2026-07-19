@@ -15,6 +15,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const matchingRoutes = require('./routes/matchingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const disputeRoutes = require('./routes/disputeRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -51,6 +52,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/disputes', disputeRoutes);
 
 // ── Production: serve React build ─────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

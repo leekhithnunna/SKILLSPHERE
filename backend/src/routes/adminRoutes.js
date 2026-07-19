@@ -11,6 +11,7 @@ const {
   getAdminLogs,
   getAnalytics,
 } = require('../controllers/adminController');
+const { getAllDisputes, resolveDispute } = require('../controllers/disputeController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
 
@@ -29,5 +30,8 @@ router.put('/gigs/:id/approve', approveGig);
 
 router.get('/payments', getAllPayments);
 router.get('/reviews/flagged', getFlaggedReviews);
+
+router.get('/disputes', getAllDisputes);
+router.put('/disputes/:id/resolve', resolveDispute);
 
 module.exports = router;

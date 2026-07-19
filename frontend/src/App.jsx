@@ -25,6 +25,9 @@ import AdminGigsPage from './pages/admin/AdminGigsPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import FindFreelancersPage from './pages/FindFreelancersPage';
 import SchedulerPage from './pages/SchedulerPage';
+import DisputesListPage from './pages/DisputesListPage';
+import DisputeDetailPage from './pages/DisputeDetailPage';
+import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 
 // Week 2 pages
 import BrowseGigsPage from './pages/BrowseGigsPage';
@@ -84,6 +87,9 @@ const App = () => {
 
           <Route path="/find-freelancers" element={<FindFreelancersPage />} />
           <Route path="/scheduler" element={<SchedulerPage />} />
+          <Route path="/disputes" element={<DisputesListPage />} />
+          <Route path="/disputes/:id" element={<DisputeDetailPage />} />
+          <Route path="/admin/disputes" element={<AdminDisputesPage />} />
 
           {/* Week 2 — Gigs */}
           <Route path="/gigs" element={<BrowseGigsPage />} />
