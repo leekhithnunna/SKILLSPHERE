@@ -70,6 +70,19 @@ npm run dev
 
 ---
 
+## Admin Dashboard
+
+All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
+
+- **Manage users** — search/filter by role, view reputation
+- **Suspend accounts** — blocks login (checked in `authController.login`); admins can't suspend other admins
+- **Verify freelancers** — grants the `freelancerProfile.isVerifiedBadge` shown on public profiles, notifies the freelancer
+- **Approve/hide gigs** — `Gig.isApproved` gates whether a gig appears in the public `GET /api/gigs` listing (defaults `true` so existing gigs are unaffected; this is an extra moderation lever, not a hard pre-publish gate)
+- **Payment monitoring** — every transaction platform-wide with status and mock/live mode
+- **Fraud detection** — surfaces reviews the automated heuristics (module 8) flagged, with the reason
+- **Admin analytics**: platform revenue (sum of released payments), active freelancers (accepted a proposal in the last 30 days), top skill categories (bar chart), job success rate (`completedGigs / (completedGigs + closedGigs)`)
+- Fixed a pre-existing bug: the admin sidebar's "All Users" link pointed at `/my-gigs` (a leftover from when the admin nav was scaffolded) — it now correctly points at the new admin pages
+
 ## AI-Powered Job Matching
 
 Goes beyond simple skill-tag filtering (PDF Module 2's example: a client posts a React job and the system should surface the top nearby, best-fit freelancers):
@@ -284,6 +297,19 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | GET | `/api/matching/gigs/:gigId/recommendations` | Gig Owner/Admin | Top 10 matched freelancers |
 | GET | `/api/matching/recommended-gigs` | Freelancer | Top 10 matched open gigs |
 | GET | `/api/matching/trending-skills` | Public | Top 10 skills across gigs from the last 30 days |
+
+### Admin
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/admin/analytics` | Admin | Revenue, active freelancers, top categories, job success rate |
+| GET | `/api/admin/logs` | Admin | Recent admin action audit log |
+| GET | `/api/admin/users` | Admin | List/search users |
+| PUT | `/api/admin/users/:id/suspend` | Admin | `{ suspended }` |
+| PUT | `/api/admin/users/:id/verify-freelancer` | Admin | Grant the verified badge |
+| GET | `/api/admin/gigs` | Admin | List all gigs |
+| PUT | `/api/admin/gigs/:id/approve` | Admin | `{ approved }` — show/hide from public listing |
+| GET | `/api/admin/payments` | Admin | All transactions |
+| GET | `/api/admin/reviews/flagged` | Admin | Reviews flagged by fraud detection |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |

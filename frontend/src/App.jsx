@@ -19,6 +19,10 @@ import FreelancerProfilePage from './pages/FreelancerProfilePage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import ChatPage from './pages/ChatPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminGigsPage from './pages/admin/AdminGigsPage';
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 
 // Week 2 pages
 import BrowseGigsPage from './pages/BrowseGigsPage';
@@ -69,6 +73,12 @@ const App = () => {
           <Route path="/messages" element={<ChatPage />} />
           <Route path="/messages/:conversationId" element={<ChatPage />} />
           <Route path="/payments" element={<TransactionHistoryPage />} />
+
+          {/* Admin */}
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/gigs" element={<AdminGigsPage />} />
+          <Route path="/admin/payments" element={<AdminPaymentsPage />} />
 
           {/* Week 2 — Gigs */}
           <Route path="/gigs" element={<BrowseGigsPage />} />

@@ -51,7 +51,7 @@ const getGigs = async (req, res) => {
     search,
   } = req.query;
 
-  const query = {};
+  const query = { isApproved: true };
 
   if (search) {
     query.$or = [
