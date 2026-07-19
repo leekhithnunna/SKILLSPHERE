@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema(
         'payment_received',
         'payment_released',
         'milestone_completed',
+        'progress_update',
         'booking_confirmed',
         'booking_cancelled',
         'review_added',

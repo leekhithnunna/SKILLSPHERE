@@ -90,6 +90,14 @@ npm run dev
 - **Admin mediation** — admins review evidence and resolve with notes, either `resolved` or `rejected`; both parties are notified (email + real-time)
 - Logged to `AdminLog` alongside the other admin actions
 
+## Project Progress Tracker
+
+- **Task completion percentage** — `Gig.completionPercentage`, auto-derived from approved-milestone ratio whenever a milestone payment is released, but overridable by the freelancer's own self-reported percentage in a progress update (documented trade-off: milestones are often too coarse-grained to reflect real-time progress, so a manual number takes precedence until the next milestone approval recomputes it)
+- **Progress logs** — new `ProgressLog` collection; the accepted freelancer posts timestamped text updates (optionally with a percentage and a file deliverable) on an in-progress gig, visible to both parties as a timeline
+- **File uploads** — each progress log can carry one attachment via the existing upload pipeline
+- **Deadline reminders** — already covered by the `node-cron` job added during infrastructure work (daily sweep, 24h-out email + notification to both parties)
+- Surfaced as a progress bar + timeline + post-update form on the gig detail page (visible once a gig is in-progress/completed)
+
 ## Admin Dashboard
 
 All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
@@ -311,6 +319,8 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | GET | `/api/payments/my` | Private | Your transaction history |
 | GET | `/api/payments/gig/:gigId` | Private (participant) | Payments for one gig |
 | PUT | `/api/gigs/:id/milestones/:milestoneId/complete` | Freelancer | Mark a milestone complete for client review |
+| GET | `/api/gigs/:id/progress-logs` | Private (participant) | Progress-log timeline |
+| POST | `/api/gigs/:id/progress-logs` | Freelancer | Post an update `{ message, completionPercentage? }` (`multipart/form-data`, optional `file`) |
 
 ### AI Matching
 | Method | Endpoint | Access | Description |

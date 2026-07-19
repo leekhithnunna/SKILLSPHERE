@@ -89,6 +89,16 @@ const gigSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // Progress tracker (module 14). Auto-derived from milestone completion
+    // ratio, but a freelancer's explicit progress-log percentage (a more
+    // granular self-report) overrides it — see progressLogController.
+    completionPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
   },
   { timestamps: true }
 );

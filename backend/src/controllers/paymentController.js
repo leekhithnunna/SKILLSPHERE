@@ -3,6 +3,7 @@ const Gig = require('../models/Gig');
 const Proposal = require('../models/Proposal');
 const notify = require('../utils/notify');
 const { createOrder, verifyPaymentSignature, refundPayment, isConfigured } = require('../config/razorpay');
+const { recomputeMilestoneProgress } = require('../utils/gigProgress');
 
 /**
  * @desc    Create a Razorpay order to fund escrow for a gig or a single
@@ -176,6 +177,7 @@ const releasePayment = async (req, res) => {
     if (milestone) {
       milestone.status = 'approved';
       await gigDoc.save();
+      await recomputeMilestoneProgress(gigDoc);
     }
   }
 

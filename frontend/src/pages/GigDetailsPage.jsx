@@ -7,6 +7,7 @@ import chatService from '../services/chatService';
 import disputeService from '../services/disputeService';
 import ProposalForm from './ProposalForm';
 import MilestonePayments from '../components/MilestonePayments';
+import ProgressTracker from '../components/ProgressTracker';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
 const statusColors = {
@@ -272,6 +273,14 @@ const GigDetailsPage = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {gig.acceptedFreelancer && ['in-progress', 'completed'].includes(gig.status) && (
+          <ProgressTracker
+            gig={gig}
+            isAcceptedFreelancer={user?._id === gig.acceptedFreelancer._id}
+            onGigUpdate={fetchGig}
+          />
         )}
 
         {gig.acceptedFreelancer && ['in-progress', 'completed'].includes(gig.status) && (

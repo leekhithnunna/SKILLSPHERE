@@ -13,9 +13,10 @@ const {
   removeAttachment,
   completeMilestone,
 } = require('../controllers/gigController');
+const { createProgressLog, getProgressLogs } = require('../controllers/progressLogController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
-const { uploadDocument } = require('../middleware/uploadMiddleware');
+const { uploadDocument, uploadAny } = require('../middleware/uploadMiddleware');
 
 // @route   GET  /api/gigs/my  — must be before /:id to avoid conflict
 router.get('/my', protect, authorizeRoles('client', 'admin'), getMyGigs);
@@ -49,6 +50,13 @@ router.put(
   authorizeRoles('freelancer'),
   completeMilestone
 );
+
+// @route   GET  /api/gigs/:id/progress-logs
+// @route   POST /api/gigs/:id/progress-logs
+router
+  .route('/:id/progress-logs')
+  .get(protect, getProgressLogs)
+  .post(protect, authorizeRoles('freelancer'), uploadAny.single('file'), createProgressLog);
 
 // @route   POST   /api/gigs/:id/attachments
 // @route   DELETE /api/gigs/:id/attachments/:attachmentId
