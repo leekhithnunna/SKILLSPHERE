@@ -1,6 +1,7 @@
 import api from './api';
 
 const userService = {
+  searchFreelancers: (params = {}) => api.get('/users', { params }),
   getPublicProfile: (id) => api.get(`/users/${id}`),
   updateFreelancerProfile: (data) => api.put('/users/freelancer-profile', data),
   addPortfolioItem: (formData) =>

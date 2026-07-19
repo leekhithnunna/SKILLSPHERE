@@ -23,6 +23,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminGigsPage from './pages/admin/AdminGigsPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
+import FindFreelancersPage from './pages/FindFreelancersPage';
 
 // Week 2 pages
 import BrowseGigsPage from './pages/BrowseGigsPage';
@@ -79,6 +80,8 @@ const App = () => {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/gigs" element={<AdminGigsPage />} />
           <Route path="/admin/payments" element={<AdminPaymentsPage />} />
+
+          <Route path="/find-freelancers" element={<FindFreelancersPage />} />
 
           {/* Week 2 — Gigs */}
           <Route path="/gigs" element={<BrowseGigsPage />} />

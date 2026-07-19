@@ -26,6 +26,8 @@ const BrowseGigsPage = () => {
     budgetMin: '',
     budgetMax: '',
     status: '',
+    city: '',
+    country: '',
   });
   const [appliedFilters, setAppliedFilters] = useState({});
 
@@ -71,7 +73,7 @@ const BrowseGigsPage = () => {
   };
 
   const handleClear = () => {
-    const empty = { search: '', skill: '', budgetMin: '', budgetMax: '', status: '' };
+    const empty = { search: '', skill: '', budgetMin: '', budgetMax: '', status: '', city: '', country: '' };
     setFilters(empty);
     setAppliedFilters({});
     setPage(1);
@@ -180,6 +182,22 @@ const BrowseGigsPage = () => {
             <option value="completed">Completed</option>
             <option value="closed">Closed</option>
           </select>
+          <input
+            name="city"
+            type="text"
+            value={filters.city}
+            onChange={handleFilterChange}
+            className="form-input"
+            placeholder="City"
+          />
+          <input
+            name="country"
+            type="text"
+            value={filters.country}
+            onChange={handleFilterChange}
+            className="form-input"
+            placeholder="Country"
+          />
         </div>
         <div className="flex gap-2 mt-3">
           <button type="submit" className="btn-primary">

@@ -49,9 +49,14 @@ const getGigs = async (req, res) => {
     budgetMax,
     status,
     search,
+    city,
+    country,
   } = req.query;
 
   const query = { isApproved: true };
+
+  if (city) query['location.city'] = new RegExp(`^${city}$`, 'i');
+  if (country) query['location.country'] = new RegExp(`^${country}$`, 'i');
 
   if (search) {
     query.$or = [

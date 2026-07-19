@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getProfile,
   updateProfile,
+  searchFreelancers,
   getPublicProfile,
   updateFreelancerProfile,
   addPortfolioItem,
@@ -12,6 +13,9 @@ const {
 const { protect, optionalAuth } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
 const { uploadImage, uploadDocument } = require('../middleware/uploadMiddleware');
+
+// @route   GET /api/users — advanced freelancer search
+router.get('/', searchFreelancers);
 
 // @route   GET /api/users/profile
 router.get('/profile', protect, getProfile);

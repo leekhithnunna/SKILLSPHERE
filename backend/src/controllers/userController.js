@@ -58,6 +58,65 @@ const updateProfile = async (req, res) => {
 };
 
 /**
+ * @desc    Advanced freelancer search — location, skill, hourly-rate range,
+ *          minimum rating, and experience (proxied by completed review
+ *          count, since there's no separate "years of experience" field)
+ * @route   GET /api/users
+ * @access  Public
+ */
+const searchFreelancers = async (req, res) => {
+  const {
+    skill,
+    city,
+    country,
+    rateMin,
+    rateMax,
+    minRating,
+    minExperience,
+    page = 1,
+    limit = 12,
+  } = req.query;
+
+  const query = { role: 'freelancer', isSuspended: false };
+
+  if (skill) {
+    query.$or = [
+      { skills: { $in: [new RegExp(skill, 'i')] } },
+      { 'freelancerProfile.skillProficiencies.skill': { $in: [new RegExp(skill, 'i')] } },
+    ];
+  }
+  if (city) query['location.city'] = new RegExp(`^${city}$`, 'i');
+  if (country) query['location.country'] = new RegExp(`^${country}$`, 'i');
+  if (rateMin || rateMax) {
+    query['freelancerProfile.hourlyRate'] = {};
+    if (rateMin) query['freelancerProfile.hourlyRate'].$gte = Number(rateMin);
+    if (rateMax) query['freelancerProfile.hourlyRate'].$lte = Number(rateMax);
+  }
+  if (minRating) query.reputationScore = { $gte: Number(minRating) };
+  if (minExperience) query.reviewCount = { $gte: Number(minExperience) };
+
+  const pageNum = Math.max(1, parseInt(page));
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+
+  const [freelancers, total] = await Promise.all([
+    User.find(query)
+      .select('name profileImage bio skills location freelancerProfile reputationScore reviewCount')
+      .sort({ reputationScore: -1, reviewCount: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum),
+    User.countDocuments(query),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    page: pageNum,
+    pages: Math.ceil(total / limitNum),
+    total,
+    data: freelancers,
+  });
+};
+
+/**
  * @desc    Get a freelancer's public profile — increments a profile-view
  *          counter unless the viewer is the profile owner (module 15)
  * @route   GET /api/users/:id
@@ -189,6 +248,7 @@ const uploadResume = async (req, res) => {
 module.exports = {
   getProfile,
   updateProfile,
+  searchFreelancers,
   getPublicProfile,
   updateFreelancerProfile,
   addPortfolioItem,

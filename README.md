@@ -70,6 +70,12 @@ npm run dev
 
 ---
 
+## Advanced Search Engine
+
+- **Freelancer directory** (`GET /api/users`, new "Find Freelancers" client-facing page) — filters by skill, city/country, hourly-rate range, minimum rating, and a minimum-experience proxy (completed review count, since the app has no separate "years of experience" field)
+- **Location-based gig search** — `city`/`country` filters added to the existing `GET /api/gigs` (which already had skill/budget-range/status/keyword search from Week 2)
+- **Uses plain MongoDB queries** (regex + range filters), not MongoDB Atlas Search or Elasticsearch — both are cluster-level features that can't be provisioned from application code; see [Manual setup steps](#manual-setup-steps-for-production-credentials) for how to layer Atlas Search on top of this later without changing the API shape
+
 ## Admin Dashboard
 
 All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
@@ -197,6 +203,7 @@ Built on the Socket.IO server added in the infrastructure commit:
 ### Users
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
+| GET | `/api/users` | Public | Advanced freelancer search (`skill`, `city`, `country`, `rateMin`, `rateMax`, `minRating`, `minExperience`, paginated) |
 | GET | `/api/users/profile` | Private | Get own profile |
 | PUT | `/api/users/profile` | Private | Update own profile (name, bio, skills, avatar, location) |
 | GET | `/api/users/:id` | Public | Get a freelancer's public profile (increments `profileViews`) |
@@ -378,3 +385,4 @@ These are optional in development (everything has a working fallback) but requir
 4. **Google OAuth** — create an OAuth Client ID in Google Cloud Console (Web application), add `http://localhost:5173` as an authorized origin, set `GOOGLE_CLIENT_ID` in both `backend/.env` and as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env`.
 5. **Hugging Face (optional)** — set `HUGGINGFACE_API_KEY` to use a hosted embedding model for job matching instead of the local fallback.
 6. **MongoDB Atlas** — replace `MONGO_URI` with your Atlas connection string for a shared/production database.
+7. **MongoDB Atlas Search (optional)** — once on Atlas, you can define a search index over `Gig`/`User` and swap the regex-based queries in `gigController.getGigs`/`userController.searchFreelancers` for a single `$search` aggregation stage for fuzzy/typo-tolerant search — the request/response shape wouldn't need to change.
