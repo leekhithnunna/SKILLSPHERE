@@ -167,7 +167,9 @@ const BrowseGigsPage = () => {
                 >
                   {gig.status.charAt(0).toUpperCase() + gig.status.slice(1)}
                 </span>
-                <span className="text-lg font-bold text-primary-600">${gig.budget}</span>
+                <span className="text-lg font-bold text-primary-600">
+                  {gig.budgetMin === gig.budgetMax ? `$${gig.budgetMin}` : `$${gig.budgetMin}–$${gig.budgetMax}`}
+                </span>
               </div>
 
               <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2">

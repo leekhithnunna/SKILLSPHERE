@@ -91,10 +91,14 @@ Basic identity fields (name, avatar, bio, tag-style skills, city/country locatio
 
 ### Gig Marketplace
 - Clients can create, edit, delete, and manage gigs
+- **Budget ranges** — gigs store `budgetMin`/`budgetMax` (was a single number); search matches on range overlap
+- **Milestones** — clients define named milestones with an amount and due date when creating/editing a gig; each tracks its own `pending → in-progress → completed → approved` status (feeds the Payments and Progress Tracker modules)
+- **Document attachments** — clients upload/remove files on a gig (spec docs, briefs) via the Cloudinary/local-disk upload pipeline
+- **Freelancer invites** — clients invite a specific freelancer by email from the gig detail page; the freelancer gets a real-time + email notification and sees it on their new "Invitations" page
 - Browse all open gigs with search, filter, and pagination
 - Filter by skill, budget range, status, and keyword search
 - Gig statuses: `open` → `in-progress` → `completed` / `closed`
-- Gig detail page with client info and skills required
+- Gig detail page with client info, skills required, milestones, and attachments
 
 ### Proposal System
 - Freelancers can submit proposals on open gigs
@@ -148,11 +152,15 @@ Basic identity fields (name, avatar, bio, tag-style skills, city/country locatio
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | GET | `/api/gigs` | Public | List gigs (search, filter, paginate) |
-| POST | `/api/gigs` | Client/Admin | Create gig |
+| POST | `/api/gigs` | Client/Admin | Create gig — `budgetMin`, `budgetMax`, optional `milestones[]` |
 | GET | `/api/gigs/my` | Client | Get own gigs |
+| GET | `/api/gigs/invited` | Freelancer | Get gigs you've been personally invited to |
 | GET | `/api/gigs/:id` | Public | Get single gig |
-| PUT | `/api/gigs/:id` | Owner/Admin | Update gig |
+| PUT | `/api/gigs/:id` | Owner/Admin | Update gig (incl. `milestones[]`) |
 | DELETE | `/api/gigs/:id` | Owner/Admin | Delete gig |
+| POST | `/api/gigs/:id/invite` | Owner | Invite a freelancer by `{ email }` |
+| POST | `/api/gigs/:id/attachments` | Owner | Attach a document (`multipart/form-data`, `file`) |
+| DELETE | `/api/gigs/:id/attachments/:attachmentId` | Owner | Remove an attachment |
 
 #### Gig query params
 ```

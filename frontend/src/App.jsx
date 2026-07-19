@@ -24,6 +24,7 @@ import CreateGigPage from './pages/CreateGigPage';
 import EditGigPage from './pages/EditGigPage';
 import MyGigsPage from './pages/MyGigsPage';
 import MyProposalsPage from './pages/MyProposalsPage';
+import InvitedGigsPage from './pages/InvitedGigsPage';
 
 const App = () => {
   const { token, isAuthenticated } = useSelector((state) => state.auth);
@@ -70,6 +71,7 @@ const App = () => {
 
           {/* Week 2 — Proposals */}
           <Route path="/my-proposals" element={<MyProposalsPage />} />
+          <Route path="/invited-gigs" element={<InvitedGigsPage />} />
         </Route>
       </Route>
 

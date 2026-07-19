@@ -12,7 +12,8 @@ const EditGigPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    budget: '',
+    budgetMin: '',
+    budgetMax: '',
     deadline: '',
     skillsRequired: [],
     status: 'open',
@@ -22,6 +23,19 @@ const EditGigPage = () => {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [milestones, setMilestones] = useState([]);
+  const [milestoneForm, setMilestoneForm] = useState({ title: '', amount: '', dueDate: '' });
+
+  const addMilestone = () => {
+    if (!milestoneForm.title.trim() || !milestoneForm.amount) return;
+    setMilestones((prev) => [...prev, { ...milestoneForm, amount: Number(milestoneForm.amount) }]);
+    setMilestoneForm({ title: '', amount: '', dueDate: '' });
+  };
+
+  const removeMilestone = (idx) => {
+    setMilestones((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   useEffect(() => {
     const fetchGig = async () => {
       try {
@@ -30,11 +44,18 @@ const EditGigPage = () => {
         setFormData({
           title: gig.title || '',
           description: gig.description || '',
-          budget: gig.budget || '',
+          budgetMin: gig.budgetMin || '',
+          budgetMax: gig.budgetMax || '',
           deadline: gig.deadline ? gig.deadline.split('T')[0] : '',
           skillsRequired: gig.skillsRequired || [],
           status: gig.status || 'open',
         });
+        setMilestones(
+          (gig.milestones || []).map((m) => ({
+            ...m,
+            dueDate: m.dueDate ? m.dueDate.split('T')[0] : '',
+          }))
+        );
       } catch {
         setError('Failed to load gig details.');
       } finally {
@@ -81,8 +102,10 @@ const EditGigPage = () => {
     try {
       const payload = {
         ...formData,
-        budget: Number(formData.budget),
+        budgetMin: Number(formData.budgetMin),
+        budgetMax: Number(formData.budgetMax),
         deadline: formData.deadline || undefined,
+        milestones,
       };
       const { data } = await gigService.updateGig(id, payload);
       dispatch(updateGig(data.data));
@@ -145,13 +168,26 @@ const EditGigPage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="form-label">Budget ($) *</label>
+            <label className="form-label">Min Budget ($) *</label>
             <input
-              name="budget"
+              name="budgetMin"
               type="number"
-              value={formData.budget}
+              value={formData.budgetMin}
+              onChange={handleChange}
+              className="form-input"
+              min="1"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="form-label">Max Budget ($) *</label>
+            <input
+              name="budgetMax"
+              type="number"
+              value={formData.budgetMax}
               onChange={handleChange}
               className="form-input"
               min="1"
@@ -229,6 +265,59 @@ const EditGigPage = () => {
               ))}
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="form-label">Milestones</label>
+          {milestones.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {milestones.map((m, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50 text-sm">
+                  <span className="flex-1">
+                    {m.title} — <span className="font-medium text-primary-600">${m.amount}</span>
+                    {m.dueDate && <span className="text-gray-400"> · due {m.dueDate}</span>}
+                    {m.status && <span className="text-gray-400"> · {m.status}</span>}
+                  </span>
+                  <button type="button" onClick={() => removeMilestone(idx)} className="text-red-400 hover:text-red-600 text-xs shrink-0">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            <input
+              placeholder="Milestone title"
+              value={milestoneForm.title}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, title: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Amount ($)"
+              value={milestoneForm.amount}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, amount: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+            <input
+              type="date"
+              value={milestoneForm.dueDate}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, dueDate: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addMilestone}
+            className="btn-secondary mt-2"
+            disabled={loading || !milestoneForm.title.trim() || !milestoneForm.amount}
+          >
+            + Add Milestone
+          </button>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

@@ -11,13 +11,27 @@ const CreateGigPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    budget: '',
+    budgetMin: '',
+    budgetMax: '',
     deadline: '',
     skillsRequired: [],
   });
   const [skillInput, setSkillInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [milestones, setMilestones] = useState([]);
+  const [milestoneForm, setMilestoneForm] = useState({ title: '', amount: '', dueDate: '' });
+
+  const addMilestone = () => {
+    if (!milestoneForm.title.trim() || !milestoneForm.amount) return;
+    setMilestones((prev) => [...prev, { ...milestoneForm, amount: Number(milestoneForm.amount) }]);
+    setMilestoneForm({ title: '', amount: '', dueDate: '' });
+  };
+
+  const removeMilestone = (idx) => {
+    setMilestones((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -51,12 +65,16 @@ const CreateGigPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.budget) {
-      setError('Title, description, and budget are required.');
+    if (!formData.title || !formData.description || !formData.budgetMin || !formData.budgetMax) {
+      setError('Title, description, and budget range are required.');
       return;
     }
-    if (Number(formData.budget) < 1) {
-      setError('Budget must be at least $1.');
+    if (Number(formData.budgetMin) < 1) {
+      setError('Minimum budget must be at least $1.');
+      return;
+    }
+    if (Number(formData.budgetMax) < Number(formData.budgetMin)) {
+      setError('Maximum budget must be greater than or equal to minimum budget.');
       return;
     }
 
@@ -65,8 +83,10 @@ const CreateGigPage = () => {
     try {
       const payload = {
         ...formData,
-        budget: Number(formData.budget),
+        budgetMin: Number(formData.budgetMin),
+        budgetMax: Number(formData.budgetMax),
         deadline: formData.deadline || undefined,
+        milestones,
       };
       const { data } = await gigService.createGig(payload);
       dispatch(addGig(data.data));
@@ -120,13 +140,27 @@ const CreateGigPage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="form-label">Budget ($) *</label>
+            <label className="form-label">Min Budget ($) *</label>
             <input
-              name="budget"
+              name="budgetMin"
               type="number"
-              value={formData.budget}
+              value={formData.budgetMin}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="300"
+              min="1"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="form-label">Max Budget ($) *</label>
+            <input
+              name="budgetMax"
+              type="number"
+              value={formData.budgetMax}
               onChange={handleChange}
               className="form-input"
               placeholder="500"
@@ -190,6 +224,58 @@ const CreateGigPage = () => {
               ))}
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="form-label">Milestones (optional)</label>
+          {milestones.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {milestones.map((m, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50 text-sm">
+                  <span className="flex-1">
+                    {m.title} — <span className="font-medium text-primary-600">${m.amount}</span>
+                    {m.dueDate && <span className="text-gray-400"> · due {m.dueDate}</span>}
+                  </span>
+                  <button type="button" onClick={() => removeMilestone(idx)} className="text-red-400 hover:text-red-600 text-xs shrink-0">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            <input
+              placeholder="Milestone title"
+              value={milestoneForm.title}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, title: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Amount ($)"
+              value={milestoneForm.amount}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, amount: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+            <input
+              type="date"
+              value={milestoneForm.dueDate}
+              onChange={(e) => setMilestoneForm((p) => ({ ...p, dueDate: e.target.value }))}
+              className="form-input"
+              disabled={loading}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addMilestone}
+            className="btn-secondary mt-2"
+            disabled={loading || !milestoneForm.title.trim() || !milestoneForm.amount}
+          >
+            + Add Milestone
+          </button>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

@@ -113,7 +113,9 @@ const MyGigsPage = () => {
                   <p className="text-sm text-gray-500 line-clamp-2 mb-3">{gig.description}</p>
 
                   <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                    <span className="font-semibold text-primary-600 text-sm">${gig.budget}</span>
+                    <span className="font-semibold text-primary-600 text-sm">
+                      {gig.budgetMin === gig.budgetMax ? `$${gig.budgetMin}` : `$${gig.budgetMin}–$${gig.budgetMax}`}
+                    </span>
                     {gig.deadline && (
                       <span>Due {new Date(gig.deadline).toLocaleDateString()}</span>
                     )}

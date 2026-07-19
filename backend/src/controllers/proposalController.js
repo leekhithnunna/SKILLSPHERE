@@ -58,7 +58,7 @@ const createProposal = async (req, res) => {
     estimatedDays,
   });
 
-  await proposal.populate('gig', 'title budget');
+  await proposal.populate('gig', 'title budgetMin budgetMax');
   await proposal.populate('freelancer', 'name profileImage');
 
   res.status(201).json({ success: true, data: proposal });
@@ -71,7 +71,7 @@ const createProposal = async (req, res) => {
  */
 const getMyProposals = async (req, res) => {
   const proposals = await Proposal.find({ freelancer: req.user._id })
-    .populate('gig', 'title budget status deadline skillsRequired')
+    .populate('gig', 'title budgetMin budgetMax status deadline skillsRequired')
     .sort({ createdAt: -1 });
 
   res.status(200).json({ success: true, data: proposals });

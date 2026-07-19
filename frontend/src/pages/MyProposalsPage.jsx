@@ -103,8 +103,13 @@ const MyProposalsPage = () => {
                         </span>
                       </span>
                       <span>{proposal.estimatedDays} days estimated</span>
-                      {proposal.gig?.budget && (
-                        <span>Gig budget: ${proposal.gig.budget}</span>
+                      {proposal.gig?.budgetMin && (
+                        <span>
+                          Gig budget:{' '}
+                          {proposal.gig.budgetMin === proposal.gig.budgetMax
+                            ? `$${proposal.gig.budgetMin}`
+                            : `$${proposal.gig.budgetMin}–$${proposal.gig.budgetMax}`}
+                        </span>
                       )}
                       <span>
                         Submitted {new Date(proposal.createdAt).toLocaleDateString()}
