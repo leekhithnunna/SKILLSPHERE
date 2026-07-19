@@ -76,6 +76,13 @@ npm run dev
 - **Location-based gig search** — `city`/`country` filters added to the existing `GET /api/gigs` (which already had skill/budget-range/status/keyword search from Week 2)
 - **Uses plain MongoDB queries** (regex + range filters), not MongoDB Atlas Search or Elasticsearch — both are cluster-level features that can't be provisioned from application code; see [Manual setup steps](#manual-setup-steps-for-production-credentials) for how to layer Atlas Search on top of this later without changing the API shape
 
+## Freelancer Availability Scheduler
+
+- **Availability slots** — derived from `freelancerProfile.weeklyAvailability` (hours/day, set in Professional Profile), conventionally starting at 09:00 (documented simplification — the data model stores an hours-per-day count, not explicit time ranges)
+- **Booking system** — `GET /api/bookings/availability/:freelancerId?date=` returns hourly slots marked available/booked; clients book directly from a freelancer's public profile
+- **Automatic scheduling** — bookings are confirmed immediately if the slot falls inside the freelancer's availability window and doesn't conflict with an existing confirmed booking; no manual approval step
+- New `/scheduler` page for both sides to view upcoming/past bookings and cancel
+
 ## Admin Dashboard
 
 All routes under `/api/admin/*` are admin-only (`authorizeRoles('admin')`), and every mutating action is written to a new `AdminLog` audit-trail collection.
@@ -317,6 +324,14 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | PUT | `/api/admin/gigs/:id/approve` | Admin | `{ approved }` — show/hide from public listing |
 | GET | `/api/admin/payments` | Admin | All transactions |
 | GET | `/api/admin/reviews/flagged` | Admin | Reviews flagged by fraud detection |
+
+### Bookings (Scheduler)
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/bookings/availability/:freelancerId?date=YYYY-MM-DD` | Public | Hourly slots for that day, marked available/booked |
+| POST | `/api/bookings` | Client | Book a slot `{ freelancerId, gigId?, date, startTime, endTime, notes? }` — auto-confirmed |
+| GET | `/api/bookings/my` | Private | Your bookings (as client or freelancer) |
+| PUT | `/api/bookings/:id/cancel` | Private (participant) | Cancel a booking |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |

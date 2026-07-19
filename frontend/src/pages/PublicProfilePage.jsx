@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import userService from '../services/userService';
 import reviewService from '../services/reviewService';
 import chatService from '../services/chatService';
+import bookingService from '../services/bookingService';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
 const StarRow = ({ value }) => (
@@ -23,6 +24,12 @@ const PublicProfilePage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [bookingDate, setBookingDate] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [bookingSlot, setBookingSlot] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +53,42 @@ const PublicProfilePage = () => {
   const handleMessage = async () => {
     const { data } = await chatService.getOrCreateConversation(id);
     navigate(`/messages/${data.data._id}`);
+  };
+
+  const handleDateChange = async (e) => {
+    const date = e.target.value;
+    setBookingDate(date);
+    setBookingMessage('');
+    if (!date) {
+      setSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    try {
+      const { data } = await bookingService.getAvailability(id, date);
+      setSlots(data.data);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  const handleBookSlot = async (slot) => {
+    setBookingSlot(slot.startTime);
+    setBookingMessage('');
+    try {
+      await bookingService.createBooking({
+        freelancerId: id,
+        date: bookingDate,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      });
+      setBookingMessage(`Booked ${slot.startTime}–${slot.endTime} on ${bookingDate}`);
+      setSlots((prev) => prev.map((s) => (s.startTime === slot.startTime ? { ...s, available: false } : s)));
+    } catch (err) {
+      setBookingMessage(err.response?.data?.message || 'Failed to book that slot.');
+    } finally {
+      setBookingSlot(null);
+    }
   };
 
   if (loading) {
@@ -132,6 +175,42 @@ const PublicProfilePage = () => {
           </div>
         )}
       </div>
+
+      {currentUser?.role === 'client' && profile.role === 'freelancer' && (fp.weeklyAvailability?.some((a) => a.hours > 0)) && (
+        <div className="card">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Book a Slot</h2>
+          <input
+            type="date"
+            min={new Date().toISOString().split('T')[0]}
+            value={bookingDate}
+            onChange={handleDateChange}
+            className="form-input w-48"
+          />
+          {slotsLoading && <p className="text-xs text-gray-400 mt-2">Loading availability…</p>}
+          {!slotsLoading && bookingDate && slots.length === 0 && (
+            <p className="text-xs text-gray-400 mt-2">Not available on this day.</p>
+          )}
+          {slots.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {slots.map((s) => (
+                <button
+                  key={s.startTime}
+                  onClick={() => handleBookSlot(s)}
+                  disabled={!s.available || bookingSlot === s.startTime}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+                    s.available
+                      ? 'border-primary-200 text-primary-700 hover:bg-primary-50'
+                      : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  {s.startTime}
+                </button>
+              ))}
+            </div>
+          )}
+          {bookingMessage && <p className="text-xs text-gray-500 mt-2">{bookingMessage}</p>}
+        </div>
+      )}
 
       {fp.portfolio?.length > 0 && (
         <div className="card">
