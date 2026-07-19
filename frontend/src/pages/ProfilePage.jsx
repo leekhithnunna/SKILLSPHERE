@@ -54,6 +54,7 @@ const ProfilePage = () => {
     profileImage: user?.profileImage || '',
     bio: user?.bio || '',
     skills: user?.skills ? [...user.skills] : [],
+    location: { city: user?.location?.city || '', country: user?.location?.country || '' },
   });
 
   const handleChange = (e) => {
@@ -101,12 +102,20 @@ const ProfilePage = () => {
     }
   };
 
+  const handleLocationChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      location: { ...prev.location, [e.target.name]: e.target.value },
+    }));
+  };
+
   const handleCancel = () => {
     setFormData({
       name: user?.name || '',
       profileImage: user?.profileImage || '',
       bio: user?.bio || '',
       skills: user?.skills ? [...user.skills] : [],
+      location: { city: user?.location?.city || '', country: user?.location?.country || '' },
     });
     setError('');
     setIsEditing(false);
@@ -254,6 +263,49 @@ const ProfilePage = () => {
                 <p className="text-gray-700 text-sm leading-relaxed">{user.bio}</p>
               ) : (
                 <p className="text-gray-400 text-sm italic">No bio added yet.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Location */}
+        <div className="mb-5">
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="form-label">City</label>
+                <input
+                  name="city"
+                  type="text"
+                  value={formData.location.city}
+                  onChange={handleLocationChange}
+                  className="form-input"
+                  placeholder="e.g. Hyderabad"
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <label className="form-label">Country</label>
+                <input
+                  name="country"
+                  type="text"
+                  value={formData.location.country}
+                  onChange={handleLocationChange}
+                  className="form-input"
+                  placeholder="e.g. India"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-2">Location</p>
+              {user?.location?.city || user?.location?.country ? (
+                <p className="text-gray-700 text-sm">
+                  {[user.location.city, user.location.country].filter(Boolean).join(', ')}
+                </p>
+              ) : (
+                <p className="text-gray-400 text-sm italic">No location set — used for hyperlocal search.</p>
               )}
             </div>
           )}

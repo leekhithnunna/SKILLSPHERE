@@ -70,6 +70,23 @@ npm run dev
 
 ---
 
+## Freelancer Professional Profiles
+
+A dedicated "Professional Profile" page (freelancer-only, linked from the sidebar) extends the basic profile with:
+- Skills with a proficiency level (beginner/intermediate/advanced/expert) — separate from the simple tag-style `skills` list used for search/matching, to avoid disrupting the existing profile editor
+- Portfolio gallery (image upload + title/description/project link)
+- Resume upload
+- Certifications (name, issuer, year, credential URL)
+- Work experience timeline
+- Weekly availability calendar (hours/day) — feeds the availability scheduler
+- Hourly rate + milestone-pricing acceptance toggle
+- Verification badge (`freelancerProfile.isVerifiedBadge`) — set by an admin from the Admin Dashboard, not self-service
+- Profile view counter, incremented whenever someone other than the owner views `GET /api/users/:id` (feeds the freelancer analytics dashboard)
+
+Basic identity fields (name, avatar, bio, tag-style skills, city/country location) stayed on the original Profile page.
+
+---
+
 ## Week 2 Features — Gig Marketplace & Proposal System
 
 ### Gig Marketplace
@@ -120,7 +137,12 @@ npm run dev
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | GET | `/api/users/profile` | Private | Get own profile |
-| PUT | `/api/users/profile` | Private | Update own profile |
+| PUT | `/api/users/profile` | Private | Update own profile (name, bio, skills, avatar, location) |
+| GET | `/api/users/:id` | Public | Get a freelancer's public profile (increments `profileViews`) |
+| PUT | `/api/users/freelancer-profile` | Freelancer | Update skills w/ proficiency, certifications, experience, pricing, weekly availability |
+| POST | `/api/users/portfolio` | Freelancer | Add a portfolio item (`multipart/form-data`, optional `image`) |
+| DELETE | `/api/users/portfolio/:itemId` | Freelancer | Remove a portfolio item |
+| POST | `/api/users/resume` | Freelancer | Upload/replace resume (`multipart/form-data`, `resume` file) |
 
 ### Gigs
 | Method | Endpoint | Access | Description |

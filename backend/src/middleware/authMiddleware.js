@@ -43,4 +43,28 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+/**
+ * Like `protect`, but never rejects the request — attaches req.user when a
+ * valid token is present, otherwise leaves it undefined. Used by public
+ * endpoints that behave slightly differently for logged-in viewers (e.g.
+ * not counting the profile owner's own visits as a "view").
+ */
+const optionalAuth = async (req, res, next) => {
+  const token =
+    req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.split(' ')[1]
+      : null;
+
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select('-password');
+  } catch (error) {
+    // Invalid/expired token on a public route — proceed as anonymous
+  }
+
+  next();
+};
+
+module.exports = { protect, optionalAuth };
