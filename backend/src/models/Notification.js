@@ -17,6 +17,7 @@ const notificationSchema = new mongoose.Schema(
         'proposal_negotiated',
         'payment_received',
         'payment_released',
+        'milestone_completed',
         'review_added',
         'message_received',
         'gig_invite',

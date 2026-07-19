@@ -316,6 +316,52 @@ const removeAttachment = async (req, res) => {
   res.status(200).json({ success: true, data: gig });
 };
 
+/**
+ * @desc    Freelancer marks a milestone as completed and ready for review
+ * @route   PUT /api/gigs/:id/milestones/:milestoneId/complete
+ * @access  Private — the gig's accepted freelancer
+ */
+const completeMilestone = async (req, res) => {
+  const { completionNote } = req.body;
+
+  const gig = await Gig.findById(req.params.id);
+  if (!gig) {
+    return res.status(404).json({ success: false, message: 'Gig not found' });
+  }
+
+  const acceptedProposal = await Proposal.findOne({ gig: gig._id, status: 'accepted' });
+  if (!acceptedProposal || acceptedProposal.freelancer.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ success: false, message: 'Not authorized to update this milestone' });
+  }
+
+  const milestone = gig.milestones.id(req.params.milestoneId);
+  if (!milestone) {
+    return res.status(404).json({ success: false, message: 'Milestone not found' });
+  }
+
+  if (!['pending', 'in-progress'].includes(milestone.status)) {
+    return res.status(400).json({ success: false, message: 'This milestone cannot be marked complete' });
+  }
+
+  milestone.status = 'completed';
+  milestone.completionNote = completionNote || '';
+  milestone.completedAt = new Date();
+  await gig.save();
+
+  await notify(
+    gig.client,
+    {
+      type: 'milestone_completed',
+      title: 'Milestone marked complete',
+      message: `${req.user.name} marked "${milestone.title}" as complete on "${gig.title}" — review and release payment when ready`,
+      link: `/gigs/${gig._id}`,
+    },
+    { email: true }
+  );
+
+  res.status(200).json({ success: true, data: gig });
+};
+
 module.exports = {
   createGig,
   getGigs,
@@ -327,4 +373,5 @@ module.exports = {
   inviteFreelancer,
   addAttachment,
   removeAttachment,
+  completeMilestone,
 };

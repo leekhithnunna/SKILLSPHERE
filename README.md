@@ -135,6 +135,14 @@ Built on the Socket.IO server added in the infrastructure commit:
 - Real-time delivery via the `notification:new` Socket.IO event (prepends to the dropdown live); REST fetch on load covers the history
 - Notification types wired so far: proposal received/accepted/rejected/negotiated, review added, message received, gig invite, deadline reminders (cron job) — payment events, dispute events, and gig-approval land with their respective modules below. "New gig posted" as a broad skill-matched alert to freelancers is covered instead by the AI job-matching recommendations feed (module 2) rather than a per-gig blast notification.
 
+### Secure Payment System
+- **Escrow flow**: client pays into escrow (`created` → `escrow`) → freelancer marks the milestone complete → client releases funds (`escrow` → `released`) or refunds before releasing (`escrow` → `refunded`)
+- **Milestone payments**: one `Payment` per milestone (or one for the whole gig if it has none), driven from a payments panel on the gig detail page
+- **Razorpay test mode with a built-in mock fallback** (`backend/src/config/razorpay.js`): with no `RAZORPAY_KEY_ID`/`SECRET` set, orders/signature-verification/refunds are all simulated in-process — the full escrow flow works end-to-end with zero real money or external calls, clearly labeled "mock mode" in the UI. Add real **test-mode** keys to exercise the actual Razorpay Checkout widget.
+- **Automatic freelancer payout** is simulated as the `release` step — real payouts require a separate KYC'd RazorpayX account, which is out of scope here; swap in RazorpayX transfers behind `releasePayment` when ready.
+- **Refund management** — client-initiated refunds on any not-yet-released escrow
+- **Transaction history** — `/payments` page (client and freelancer both see their side) with escrow/earned totals
+
 ### Dashboard Analytics
 - **Client dashboard:** total gigs, open gigs, active gigs, completed gigs, proposals received
 - **Freelancer dashboard:** total proposals, pending, accepted, active jobs
@@ -248,6 +256,17 @@ Connect with `io(url, { auth: { token } })` using the same JWT as REST.
 | GET | `/api/notifications` | Private | Paginated list + `unreadCount` |
 | PUT | `/api/notifications/:id/read` | Private | Mark one as read |
 | PUT | `/api/notifications/read-all` | Private | Mark all as read |
+
+### Payments
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/api/payments/order` | Client | Create an escrow order for a gig or `milestoneId` |
+| POST | `/api/payments/verify` | Client | Verify checkout + move funds into escrow |
+| POST | `/api/payments/:id/release` | Client | Release escrowed funds to the freelancer |
+| POST | `/api/payments/:id/refund` | Client | Refund an escrowed (not yet released) payment |
+| GET | `/api/payments/my` | Private | Your transaction history |
+| GET | `/api/payments/gig/:gigId` | Private (participant) | Payments for one gig |
+| PUT | `/api/gigs/:id/milestones/:milestoneId/complete` | Freelancer | Mark a milestone complete for client review |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |

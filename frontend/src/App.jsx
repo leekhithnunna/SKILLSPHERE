@@ -18,6 +18,7 @@ import ProfilePage from './pages/ProfilePage';
 import FreelancerProfilePage from './pages/FreelancerProfilePage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import ChatPage from './pages/ChatPage';
+import TransactionHistoryPage from './pages/TransactionHistoryPage';
 
 // Week 2 pages
 import BrowseGigsPage from './pages/BrowseGigsPage';
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="/users/:id" element={<PublicProfilePage />} />
           <Route path="/messages" element={<ChatPage />} />
           <Route path="/messages/:conversationId" element={<ChatPage />} />
+          <Route path="/payments" element={<TransactionHistoryPage />} />
 
           {/* Week 2 — Gigs */}
           <Route path="/gigs" element={<BrowseGigsPage />} />

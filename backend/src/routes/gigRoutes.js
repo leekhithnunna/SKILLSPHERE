@@ -11,6 +11,7 @@ const {
   inviteFreelancer,
   addAttachment,
   removeAttachment,
+  completeMilestone,
 } = require('../controllers/gigController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
@@ -40,6 +41,14 @@ router
 
 // @route   POST /api/gigs/:id/invite
 router.post('/:id/invite', protect, authorizeRoles('client'), inviteFreelancer);
+
+// @route   PUT /api/gigs/:id/milestones/:milestoneId/complete
+router.put(
+  '/:id/milestones/:milestoneId/complete',
+  protect,
+  authorizeRoles('freelancer'),
+  completeMilestone
+);
 
 // @route   POST   /api/gigs/:id/attachments
 // @route   DELETE /api/gigs/:id/attachments/:attachmentId

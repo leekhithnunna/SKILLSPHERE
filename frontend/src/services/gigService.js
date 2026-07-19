@@ -14,6 +14,8 @@ const gigService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   removeAttachment: (id, attachmentId) => api.delete(`/gigs/${id}/attachments/${attachmentId}`),
+  completeMilestone: (id, milestoneId, completionNote) =>
+    api.put(`/gigs/${id}/milestones/${milestoneId}/complete`, { completionNote }),
 };
 
 export default gigService;

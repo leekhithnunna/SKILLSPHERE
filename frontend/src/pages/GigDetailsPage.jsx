@@ -5,6 +5,7 @@ import gigService from '../services/gigService';
 import reviewService from '../services/reviewService';
 import chatService from '../services/chatService';
 import ProposalForm from './ProposalForm';
+import MilestonePayments from '../components/MilestonePayments';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
 const statusColors = {
@@ -90,6 +91,13 @@ const GigDetailsPage = () => {
     } catch {
       // no-op
     }
+  };
+
+  const handleMilestoneUpdate = async (milestoneId) => {
+    if (milestoneId) {
+      await gigService.completeMilestone(id, milestoneId, '');
+    }
+    await fetchGig();
   };
 
   const handleMessage = async (participantId) => {
@@ -238,6 +246,16 @@ const GigDetailsPage = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {gig.acceptedFreelancer && ['in-progress', 'completed'].includes(gig.status) && (
+          <MilestonePayments
+            gig={gig}
+            user={user}
+            isOwner={isOwner}
+            isAcceptedFreelancer={user?._id === gig.acceptedFreelancer._id}
+            onMilestoneUpdate={handleMilestoneUpdate}
+          />
         )}
 
         {(gig.attachments?.length > 0 || isOwner) && (
