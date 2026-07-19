@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { login } from '../redux/authSlice';
 import api from '../services/api';
 import authService from '../services/authService';
+import Logo from '../components/Logo';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -60,9 +61,7 @@ const LoginPage = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-              <span className="text-white font-bold">SS</span>
-            </div>
+            <Logo className="w-10 h-10" />
             <span className="text-2xl font-bold text-gray-900">SkillSphere</span>
           </Link>
           <p className="text-gray-500 text-sm mt-2">Sign in to your account</p>

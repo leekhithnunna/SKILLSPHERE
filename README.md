@@ -4,6 +4,17 @@ SkillSphere is a full-stack MERN platform connecting clients with freelancers in
 
 ---
 
+## Branding & Imagery
+
+- **Logo** — a custom vector logomark (`frontend/src/components/Logo.jsx`, also used as `frontend/public/favicon.svg`), not a photo or AI-generated image
+- **Homepage photography** (`frontend/src/assets/images/`) — three real, unedited stock photographs sourced from [Unsplash](https://unsplash.com) (free to use, no attribution required under the Unsplash License):
+  - `hero-teamwork.jpg` — photo by Dylan Gillis ([source](https://images.unsplash.com/photo-1517048676732-d65bc937f952))
+  - `collab-laptop.jpg` — photo by Annie Spratt ([source](https://images.unsplash.com/photo-1522071820081-009f0129c71c))
+  - `handshake-deal.jpg` — photo by Sebastian Herrmann ([source](https://images.unsplash.com/photo-1549923746-c502d488b3ea))
+- No AI-generated images or logos are used anywhere in the app.
+
+---
+
 ## Tech Stack
 
 **Backend:** Node.js · Express · MongoDB (Mongoose) · JWT Auth · Socket.IO · Nodemailer · Cloudinary · Razorpay · node-cron  

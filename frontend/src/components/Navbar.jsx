@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux';
 import NotificationBell from './NotificationBell';
+import Logo from './Logo';
 
 const roleBadgeClass = {
   client: 'badge-client',
@@ -15,9 +16,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between px-6 py-4">
         {/* Left: Logo / App Name (visible on mobile) */}
         <div className="flex items-center gap-2 md:hidden">
-          <div className="w-7 h-7 rounded-md bg-primary-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xs">SS</span>
-          </div>
+          <Logo className="w-7 h-7" />
           <span className="text-base font-bold text-gray-900">SkillSphere</span>
         </div>
 

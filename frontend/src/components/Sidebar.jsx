@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/authSlice';
 import api from '../services/api';
+import Logo from './Logo';
 
 const dashboardIcon = (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,9 +218,7 @@ const Sidebar = () => {
     <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 shadow-sm">
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
-        <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-          <span className="text-white font-bold text-sm">SS</span>
-        </div>
+        <Logo className="w-8 h-8" />
         <span className="text-lg font-bold text-gray-900">SkillSphere</span>
       </div>
 

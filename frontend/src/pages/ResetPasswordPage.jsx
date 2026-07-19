@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import authService from '../services/authService';
+import Logo from '../components/Logo';
 
 const ResetPasswordPage = () => {
   const { token } = useParams();
@@ -43,9 +44,7 @@ const ResetPasswordPage = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-              <span className="text-white font-bold">SS</span>
-            </div>
+            <Logo className="w-10 h-10" />
             <span className="text-2xl font-bold text-gray-900">SkillSphere</span>
           </Link>
           <p className="text-gray-500 text-sm mt-2">Choose a new password</p>
