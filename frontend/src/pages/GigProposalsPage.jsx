@@ -29,17 +29,17 @@ const ProposalCard = ({ proposal, onAccept, onReject, onNegotiate, busy }) => {
   return (
     <div className="card">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3">
+        <Link to={`/users/${proposal.freelancer?._id}`} className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
             <span className="text-primary-700 font-semibold text-sm">
               {proposal.freelancer?.name?.charAt(0)?.toUpperCase() || 'F'}
             </span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">{proposal.freelancer?.name}</p>
+            <p className="text-sm font-semibold text-gray-900 group-hover:text-primary-600">{proposal.freelancer?.name}</p>
             <p className="text-xs text-gray-400">{proposal.freelancer?.email}</p>
           </div>
-        </div>
+        </Link>
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.classes}`}>
           {cfg.label}
         </span>

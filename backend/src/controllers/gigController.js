@@ -1,5 +1,6 @@
 const Gig = require('../models/Gig');
 const User = require('../models/User');
+const Proposal = require('../models/Proposal');
 const { uploadBuffer } = require('../utils/uploadFile');
 const notify = require('../utils/notify');
 
@@ -108,7 +109,20 @@ const getGigById = async (req, res) => {
     return res.status(404).json({ success: false, message: 'Gig not found' });
   }
 
-  res.status(200).json({ success: true, data: gig });
+  const gigData = gig.toObject();
+
+  // Surface who the gig was awarded to once work has started — used by the
+  // chat, payments, and review UIs to know who the counterpart is without
+  // every viewer needing access to the (owner/admin-only) proposals list.
+  if (['in-progress', 'completed'].includes(gig.status)) {
+    const acceptedProposal = await Proposal.findOne({ gig: gig._id, status: 'accepted' }).populate(
+      'freelancer',
+      'name profileImage'
+    );
+    gigData.acceptedFreelancer = acceptedProposal?.freelancer || null;
+  }
+
+  res.status(200).json({ success: true, data: gigData });
 };
 
 /**

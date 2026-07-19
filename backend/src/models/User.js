@@ -156,6 +156,19 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // Denormalized reputation summary, recomputed by reviewController
+    // whenever a non-flagged review involving this user is created. Stored
+    // rather than computed on every read since it's shown in list views
+    // (browse gigs, proposals) where an aggregation per-row would be costly.
+    reputationScore: {
+      type: Number,
+      default: 0,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

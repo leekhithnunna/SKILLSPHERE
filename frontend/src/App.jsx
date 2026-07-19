@@ -16,6 +16,7 @@ import TwoFactorPage from './pages/TwoFactorPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import FreelancerProfilePage from './pages/FreelancerProfilePage';
+import PublicProfilePage from './pages/PublicProfilePage';
 
 // Week 2 pages
 import BrowseGigsPage from './pages/BrowseGigsPage';
@@ -62,6 +63,7 @@ const App = () => {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/freelancer-profile" element={<FreelancerProfilePage />} />
+          <Route path="/users/:id" element={<PublicProfilePage />} />
 
           {/* Week 2 — Gigs */}
           <Route path="/gigs" element={<BrowseGigsPage />} />

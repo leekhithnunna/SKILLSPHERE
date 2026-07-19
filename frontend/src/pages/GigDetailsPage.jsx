@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import gigService from '../services/gigService';
+import reviewService from '../services/reviewService';
 import ProposalForm from './ProposalForm';
 import resolveFileUrl from '../utils/resolveFileUrl';
 
@@ -28,6 +29,10 @@ const GigDetailsPage = () => {
 
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState('');
 
   const fetchGig = async () => {
     try {
@@ -83,6 +88,26 @@ const GigDetailsPage = () => {
       setGig(data.data);
     } catch {
       // no-op
+    }
+  };
+
+  const handleSubmitReview = async (e, revieweeId) => {
+    e.preventDefault();
+    setReviewSubmitting(true);
+    setReviewMessage('');
+    try {
+      await reviewService.createReview({
+        gigId: id,
+        revieweeId,
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment,
+      });
+      setReviewMessage('Review submitted — thank you!');
+      setReviewForm({ rating: 5, comment: '' });
+    } catch (err) {
+      setReviewMessage(err.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -267,10 +292,10 @@ const GigDetailsPage = () => {
         {/* Client info */}
         <div className="pt-4 border-t border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900 mb-3">Posted by</h2>
-          <div className="flex items-center gap-3">
+          <Link to={`/users/${gig.client?._id}`} className="flex items-center gap-3 group">
             {gig.client?.profileImage ? (
               <img
-                src={gig.client.profileImage}
+                src={resolveFileUrl(gig.client.profileImage)}
                 alt={gig.client.name}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -282,13 +307,67 @@ const GigDetailsPage = () => {
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-gray-900">{gig.client?.name}</p>
+              <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600">{gig.client?.name}</p>
               {gig.client?.bio && (
                 <p className="text-xs text-gray-500 line-clamp-1">{gig.client.bio}</p>
               )}
             </div>
-          </div>
+          </Link>
         </div>
+
+        {gig.acceptedFreelancer && (
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Working with</h2>
+            <Link to={`/users/${gig.acceptedFreelancer._id}`} className="flex items-center gap-3 group">
+              {gig.acceptedFreelancer.profileImage ? (
+                <img
+                  src={resolveFileUrl(gig.acceptedFreelancer.profileImage)}
+                  alt={gig.acceptedFreelancer.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                  <span className="text-primary-700 font-semibold text-sm">
+                    {gig.acceptedFreelancer.name?.charAt(0)?.toUpperCase() || 'F'}
+                  </span>
+                </div>
+              )}
+              <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600">
+                {gig.acceptedFreelancer.name}
+              </p>
+            </Link>
+          </div>
+        )}
+
+        {gig.status === 'completed' && gig.acceptedFreelancer && (isOwner || user?._id === gig.acceptedFreelancer._id) && (
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">
+              Leave a review for {isOwner ? gig.acceptedFreelancer.name : gig.client?.name}
+            </h2>
+            <form onSubmit={(e) => handleSubmitReview(e, isOwner ? gig.acceptedFreelancer._id : gig.client._id)} className="space-y-3">
+              <select
+                value={reviewForm.rating}
+                onChange={(e) => setReviewForm((p) => ({ ...p, rating: e.target.value }))}
+                className="form-input w-32"
+              >
+                {[5, 4, 3, 2, 1].map((n) => (
+                  <option key={n} value={n}>{'★'.repeat(n)} ({n})</option>
+                ))}
+              </select>
+              <textarea
+                value={reviewForm.comment}
+                onChange={(e) => setReviewForm((p) => ({ ...p, comment: e.target.value }))}
+                rows={3}
+                className="form-input resize-none"
+                placeholder="How was the experience working together?"
+              />
+              <button type="submit" disabled={reviewSubmitting} className="btn-secondary">
+                {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+              </button>
+              {reviewMessage && <p className="text-xs text-gray-500">{reviewMessage}</p>}
+            </form>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3">

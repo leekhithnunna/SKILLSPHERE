@@ -111,6 +111,14 @@ Basic identity fields (name, avatar, bio, tag-style skills, city/country locatio
 - Freelancers can withdraw pending proposals
 - Notifications fire on proposal received/accepted/rejected/countered (real-time + email for accept)
 
+### Smart Reputation & Review System
+- Reviews are gated on a **completed gig with an accepted proposal** linking reviewer and reviewee — there's no path to review someone you didn't actually work with
+- **Weighted reputation score** (`utils/reputationScore.js`) instead of a plain average: reviews on higher-budget gigs (proxy for significant work) count more, and reviews older than 180 days are down-weighted — recomputed and denormalized onto `User.reputationScore`/`reviewCount` whenever a non-flagged review is created
+- Optional per-criteria sub-ratings (communication, quality, timeliness, professionalism) surfaced as a breakdown on the public profile
+- **Fraud detection**: reviews are flagged (excluded from the score, kept for audit) when a reviewer posts 3+ reviews within 10 minutes, or repeats identical comment text — flagged reviews stay in the database with `flagged`/`flagReason` for the admin module to act on
+- New public profile page (`/users/:id`) shows a freelancer's or client's bio, skills, portfolio, experience, weighted rating, and full review list
+- `GET /api/gigs/:id` now also returns `acceptedFreelancer` once a gig is in-progress/completed, so both parties (and future chat/payment features) know who they're paired with without needing owner-only proposal access
+
 ### Dashboard Analytics
 - **Client dashboard:** total gigs, open gigs, active gigs, completed gigs, proposals received
 - **Freelancer dashboard:** total proposals, pending, accepted, active jobs
@@ -191,6 +199,13 @@ Response:
 | DELETE | `/api/proposals/:id` | Proposal Owner | Withdraw proposal |
 | PUT | `/api/proposals/:id/accept` | Client (gig owner) | Accept proposal (locks in latest negotiated amount) |
 | PUT | `/api/proposals/:id/reject` | Client (gig owner) | Reject proposal |
+
+### Reviews
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/api/reviews` | Private | Leave a review `{ gigId, revieweeId, rating, comment?, criteria? }` |
+| GET | `/api/reviews/user/:userId` | Public | Get a user's non-flagged reviews + weighted reputation stats |
+| GET | `/api/reviews/my` | Private | Get reviews you've written |
 
 ### Dashboard
 | Method | Endpoint | Access | Description |
