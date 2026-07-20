@@ -462,3 +462,15 @@ These are optional in development (everything has a working fallback) but requir
 5. **Hugging Face (optional)** — set `HUGGINGFACE_API_KEY` to use a hosted embedding model for job matching instead of the local fallback.
 6. **MongoDB Atlas** — replace `MONGO_URI` with your Atlas connection string for a shared/production database.
 7. **MongoDB Atlas Search (optional)** — once on Atlas, you can define a search index over `Gig`/`User` and swap the regex-based queries in `gigController.getGigs`/`userController.searchFreelancers` for a single `$search` aggregation stage for fuzzy/typo-tolerant search — the request/response shape wouldn't need to change.
+
+### Current local environment status
+
+This checklist tracks which of the steps above are already wired up for local development via `backend/.env` / `frontend/.env` (both gitignored — never committed, no secrets appear in this repo). Each was verified by restarting the dev server and confirming the relevant mock-mode fallback message no longer appears, plus a live end-to-end check against the real service:
+
+- [x] **MongoDB Atlas** — `MONGO_URI` points at a real Atlas cluster (`cluster0.rvcw0of.mongodb.net`); confirmed via `MongoDB Connected: ...` in the startup log.
+- [x] **Email (Nodemailer)** — real Gmail SMTP credentials configured; confirmed by triggering `POST /api/auth/register` and observing no send failure (the Ethereal fallback log line no longer appears).
+- [x] **Cloudinary** — real account credentials configured; confirmed by uploading a test portfolio image and seeing a `res.cloudinary.com` URL returned instead of a local `/uploads/` path.
+- [x] **Google OAuth** — real `GOOGLE_CLIENT_ID` set in both backend and frontend env files; confirmed the Vite dev bundle injects the value and the "Continue with Google" button's render condition is satisfied.
+- [x] **Razorpay** — real **test-mode** keys configured; confirmed by creating a live escrow payment order (`POST /api/payments/order`) and getting back a real Razorpay order ID (`order_...`) with `isMock: false`, instead of the mock gateway's `order_mock_...` id.
+- [ ] **Hugging Face** — still using the local skill-overlap fallback (no key configured).
+- [ ] **MongoDB Atlas Search** — not yet set up; queries still use the regex-based search.
