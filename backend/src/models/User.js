@@ -91,6 +91,13 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Marks accounts created by scripts/seedDemoData.js so demo data can be
+    // safely identified and cleared without touching real user accounts.
+    isSeedData: {
+      type: Boolean,
+      default: false,
+    },
+
     // ── Freelancer professional profile (module 3) ────────────────────────
     freelancerProfile: {
       skillProficiencies: [
