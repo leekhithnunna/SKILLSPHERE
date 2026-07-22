@@ -28,8 +28,10 @@ const embeddingSimilarity = async (skillsA, skillsB) => {
   const textA = skillsA.join(', ');
   const textB = skillsB.join(', ');
 
+  // api-inference.huggingface.co (the old Inference API host) has been
+  // retired — Hugging Face now routes inference through this host instead.
   const response = await fetch(
-    'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2',
+    'https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction',
     {
       method: 'POST',
       headers: {
@@ -60,8 +62,19 @@ const embeddingSimilarity = async (skillsA, skillsB) => {
  * otherwise falls back to local Jaccard similarity — and also falls back
  * on any API error so matching never breaks because of a flaky third party.
  */
+let modeLogged = false;
+
 const computeSkillSimilarity = async (skillsA = [], skillsB = []) => {
   if (skillsA.length === 0 || skillsB.length === 0) return 0;
+
+  if (!modeLogged) {
+    modeLogged = true;
+    console.log(
+      process.env.HUGGINGFACE_API_KEY
+        ? '[matching] Skill similarity mode: Hugging Face embeddings (HUGGINGFACE_API_KEY is set)'
+        : '[matching] Skill similarity mode: local Jaccard fallback (HUGGINGFACE_API_KEY is not set)'
+    );
+  }
 
   if (process.env.HUGGINGFACE_API_KEY) {
     try {
