@@ -78,6 +78,7 @@ npm run dev
 - **Password reset** — `/forgot-password` emails a 1h reset link; `/reset-password/:token` sets a new password
 - **Two-factor authentication (2FA)** — optional per-account toggle in Profile → Security; when enabled, login emails a 6-digit one-time code that must be verified before a session token is issued
 - **Google OAuth login** — "Continue with Google" button on Login/Register verifies the Google ID token server-side and links or creates an account (requires `GOOGLE_CLIENT_ID`, see [Manual setup steps](#manual-setup-steps-for-production-credentials))
+- **Admin-by-email allowlist** — emails listed in `ADMIN_EMAILS` (comma-separated) are always granted the `admin` role the moment they sign in with Google, whether that's a brand-new account, an existing email/password account being linked to Google for the first time, or an existing Google account from before the allowlist was set. This is the supported way to provision an admin without a seed script or manual database edit — see `backend/src/controllers/oauthController.js`.
 
 ---
 
@@ -459,9 +460,10 @@ These are optional in development (everything has a working fallback) but requir
 2. **Cloudinary** — create a free account at cloudinary.com, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
 3. **Razorpay** — create a Razorpay account, generate **test-mode** keys first, set `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET`. Swap for live keys only after a real go-live review.
 4. **Google OAuth** — create an OAuth Client ID in Google Cloud Console (Web application), add `http://localhost:5173` as an authorized origin, set `GOOGLE_CLIENT_ID` in both `backend/.env` and as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env`.
-5. **Hugging Face (optional)** — set `HUGGINGFACE_API_KEY` to use a hosted embedding model for job matching instead of the local fallback.
-6. **MongoDB Atlas** — replace `MONGO_URI` with your Atlas connection string for a shared/production database.
-7. **MongoDB Atlas Search (optional)** — once on Atlas, you can define a search index over `Gig`/`User` and swap the regex-based queries in `gigController.getGigs`/`userController.searchFreelancers` for a single `$search` aggregation stage for fuzzy/typo-tolerant search — the request/response shape wouldn't need to change.
+5. **Admin provisioning** — set `ADMIN_EMAILS` in `backend/.env` to a comma-separated list of emails (e.g. `ADMIN_EMAILS=you@example.com`); anyone who signs in with Google using one of those addresses is automatically granted the `admin` role, no seed script or manual database edit required.
+6. **Hugging Face (optional)** — set `HUGGINGFACE_API_KEY` to use a hosted embedding model for job matching instead of the local fallback.
+7. **MongoDB Atlas** — replace `MONGO_URI` with your Atlas connection string for a shared/production database.
+8. **MongoDB Atlas Search (optional)** — once on Atlas, you can define a search index over `Gig`/`User` and swap the regex-based queries in `gigController.getGigs`/`userController.searchFreelancers` for a single `$search` aggregation stage for fuzzy/typo-tolerant search — the request/response shape wouldn't need to change.
 
 ### Current local environment status
 
@@ -471,6 +473,7 @@ This checklist tracks which of the steps above are already wired up for local de
 - [x] **Email (Nodemailer)** — real Gmail SMTP credentials configured; confirmed by triggering `POST /api/auth/register` and observing no send failure (the Ethereal fallback log line no longer appears).
 - [x] **Cloudinary** — real account credentials configured; confirmed by uploading a test portfolio image and seeing a `res.cloudinary.com` URL returned instead of a local `/uploads/` path.
 - [x] **Google OAuth** — real `GOOGLE_CLIENT_ID` set in both backend and frontend env files; confirmed the Vite dev bundle injects the value and the "Continue with Google" button's render condition is satisfied.
+- [x] **Admin provisioning** — `ADMIN_EMAILS` configured with the project owner's Google account email; confirmed by signing in with Google and seeing `role: "admin"` on the returned user object and the admin nav in the Sidebar.
 - [x] **Razorpay** — real **test-mode** keys configured; confirmed by creating a live escrow payment order (`POST /api/payments/order`) and getting back a real Razorpay order ID (`order_...`) with `isMock: false`, instead of the mock gateway's `order_mock_...` id.
 - [ ] **Hugging Face** — still using the local skill-overlap fallback (no key configured).
 - [ ] **MongoDB Atlas Search** — not yet set up; queries still use the regex-based search.

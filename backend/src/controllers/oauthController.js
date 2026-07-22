@@ -4,6 +4,13 @@ const generateToken = require('../utils/generateToken');
 
 const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
+// Emails in this list are always granted the admin role when they sign in
+// with Google — set via ADMIN_EMAILS in .env (comma-separated).
+const adminEmails = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 /**
  * @desc    Log in (or register) with a Google ID token from the frontend's
  *          Google Identity Services button
@@ -37,24 +44,35 @@ const googleLogin = async (req, res) => {
 
   const { sub: googleId, email, name, picture } = payload;
 
-  let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
+  const normalizedEmail = email.toLowerCase();
+  const isAdminEmail = adminEmails.includes(normalizedEmail);
+
+  let user = await User.findOne({ $or: [{ googleId }, { email: normalizedEmail }] });
 
   if (user) {
     if (user.isSuspended) {
       return res.status(403).json({ success: false, message: 'Your account has been suspended.' });
     }
+    let dirty = false;
     if (!user.googleId) {
       user.googleId = googleId;
       user.isVerified = true; // Google already verified this email
+      dirty = true;
+    }
+    if (isAdminEmail && user.role !== 'admin') {
+      user.role = 'admin';
+      dirty = true;
+    }
+    if (dirty) {
       await user.save({ validateBeforeSave: false });
     }
   } else {
     const allowedRoles = ['client', 'freelancer'];
     user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       googleId,
-      role: allowedRoles.includes(role) ? role : 'client',
+      role: isAdminEmail ? 'admin' : allowedRoles.includes(role) ? role : 'client',
       isVerified: true,
       profileImage: picture || '',
     });
