@@ -156,9 +156,9 @@ const MilestonePayments = ({ gig, user, isOwner, isAcceptedFreelancer, onMilesto
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {isOwner && !payment && (
+                {isOwner && (!payment || payment.status === 'created') && (
                   <button onClick={() => handlePay(milestone?._id, amount)} disabled={busy} className="btn-primary text-xs py-1.5 px-3">
-                    {busy ? 'Processing...' : `Pay $${amount}`}
+                    {busy ? 'Processing...' : payment ? `Retry Payment ($${amount})` : `Pay $${amount}`}
                   </button>
                 )}
                 {isAcceptedFreelancer && payment?.status === 'escrow' && milestone?.status === 'in-progress' && (

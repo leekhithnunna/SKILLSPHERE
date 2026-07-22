@@ -43,17 +43,28 @@ const createPaymentOrder = async (req, res) => {
     amount = acceptedProposal.bidAmount || gig.budgetMax;
   }
 
-  const existingPayment = await Payment.findOne({
+  // Only a funded (escrow) or completed (released) payment should block a
+  // new attempt. A payment stuck in "created" means an earlier checkout was
+  // abandoned before verifyPayment ran (modal closed, network error, etc.)
+  // and must never permanently block paying for this gig/milestone.
+  const blockingPayment = await Payment.findOne({
     gig: gigId,
     milestoneId: milestoneId || null,
-    status: { $in: ['created', 'escrow', 'released'] },
+    status: { $in: ['escrow', 'released'] },
   });
-  if (existingPayment) {
+  if (blockingPayment) {
     return res.status(400).json({
       success: false,
       message: `This ${milestoneId ? 'milestone' : 'gig'} already has a payment in progress or completed`,
     });
   }
+
+  // Supersede any abandoned "created" orders for this gig/milestone so
+  // payments never pile up in a stuck, unpayable state.
+  await Payment.updateMany(
+    { gig: gigId, milestoneId: milestoneId || null, status: 'created' },
+    { $set: { status: 'failed' } }
+  );
 
   const { orderId, isMock } = await createOrder({
     amount,
