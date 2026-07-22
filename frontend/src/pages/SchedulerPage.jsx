@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import bookingService from '../services/bookingService';
+import BookingCalendar from '../components/BookingCalendar';
+import BookingDetailModal from '../components/BookingDetailModal';
 
 const SchedulerPage = () => {
   const { user } = useSelector((state) => state.auth);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -27,10 +30,18 @@ const SchedulerPage = () => {
     try {
       await bookingService.cancelBooking(id);
       setBookings((prev) => prev.map((b) => (b._id === id ? { ...b, status: 'cancelled' } : b)));
+      setSelectedBooking((prev) => (prev && prev._id === id ? { ...prev, status: 'cancelled' } : prev));
     } finally {
       setCancellingId(null);
     }
   };
+
+  // Calendar events need a display name regardless of viewer role — show
+  // whichever party isn't the person looking at the calendar.
+  const calendarBookings = bookings.map((b) => ({
+    ...b,
+    counterpartName: (user?.role === 'freelancer' ? b.client : b.freelancer)?.name || 'Unknown',
+  }));
 
   const upcoming = bookings.filter((b) => b.status === 'confirmed' && new Date(b.date) >= new Date().setHours(0, 0, 0, 0));
   const past = bookings.filter((b) => !(b.status === 'confirmed' && new Date(b.date) >= new Date().setHours(0, 0, 0, 0)));
@@ -78,7 +89,7 @@ const SchedulerPage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Scheduler</h1>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -93,21 +104,33 @@ const SchedulerPage = () => {
         </div>
       )}
 
-      <div>
-        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Upcoming</h2>
-        {upcoming.length === 0 ? (
-          <p className="text-gray-400 text-sm italic">No upcoming bookings.</p>
-        ) : (
-          <div className="space-y-2">{upcoming.map(renderBooking)}</div>
+      <BookingCalendar bookings={calendarBookings} onSelectBooking={setSelectedBooking} />
+
+      <div className="max-w-2xl space-y-6">
+        <div>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Upcoming</h2>
+          {upcoming.length === 0 ? (
+            <p className="text-gray-400 text-sm italic">No upcoming bookings.</p>
+          ) : (
+            <div className="space-y-2">{upcoming.map(renderBooking)}</div>
+          )}
+        </div>
+
+        {past.length > 0 && (
+          <div>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Past &amp; Cancelled</h2>
+            <div className="space-y-2">{past.map(renderBooking)}</div>
+          </div>
         )}
       </div>
 
-      {past.length > 0 && (
-        <div>
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Past &amp; Cancelled</h2>
-          <div className="space-y-2">{past.map(renderBooking)}</div>
-        </div>
-      )}
+      <BookingDetailModal
+        booking={selectedBooking}
+        viewerRole={user?.role}
+        onClose={() => setSelectedBooking(null)}
+        onCancel={handleCancel}
+        cancelling={!!selectedBooking && cancellingId === selectedBooking._id}
+      />
     </div>
   );
 };
